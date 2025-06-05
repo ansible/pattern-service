@@ -1,0 +1,277 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Ansible Pattern Schema",
+    "description": "A schema for defining and validating Ansible patterns",
+    "type": "object",
+    "required": [
+        "schema_version",
+        "name",
+        "title",
+        "description",
+        "short_description",
+        "tags",
+        "aap_resources"
+    ],
+    "properties": {
+        "schema_version": {
+            "description": "Version of the schema format being used",
+            "type": "string"
+        },
+        "name": {
+            "description": "Human readable name for the pattern",
+            "type": "string"
+        },
+        "title": {
+            "description": "Human readable title for the pattern, may be used for pattern catalog and display purposes",
+            "type": "string"
+        },
+        "description": {
+            "description": "A detailed description for the pattern functionality",
+            "type": "string"
+        },
+        "short_description": {
+            "description": "A brief summary of what the pattern does that can be used for display purposes",
+            "type": "string"
+        },
+        "tags": {
+            "description": "List of tags associated with the pattern",
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "minItems": 1,
+            "uniqueItems": true
+        },
+        "aap_resources": {
+            "description": "Define the resources required in AAP to run the pattern automation",
+            "type": "object",
+            "required": [
+                "controller_project",
+                "controller_execution_environment",
+                "controller_labels",
+                "controller_job_templates"
+            ],
+            "properties": {
+                "controller_project": {
+                    "description": "Definition for the automation controller project",
+                    "type": "object",
+                    "required": [
+                        "name",
+                        "description"
+                    ],
+                    "properties": {
+                        "name": {
+                            "description": "Name for the project to be created in automation controller",
+                            "type": "string"
+                        },
+                        "description": {
+                            "description": "Description for the project to be created in automation controller",
+                            "type": "string"
+                        },
+                        "scm_type": {
+                            "description": "Source control type to use for the project",
+                            "type": "string",
+                            "enum": [
+                                "git",
+                                "svn",
+                                "insights"
+                            ]
+                        },
+                        "scm_url": {
+                            "description": "Source control URL to use for the project",
+                            "type": "string"
+                        },
+                        "scm_branch": {
+                            "description": "Source control branch to use for the project",
+                            "type": "string"
+                        },
+                        "scm_update_on_launch": {
+                            "description": "Whether to update the project from source control when a job using the project is launched",
+                            "type": "boolean"
+                        }
+                    }
+                },
+                "controller_execution_environment": {
+                    "description": "Definition for the execution environment",
+                    "type": "object",
+                    "required": [
+                        "name",
+                        "description",
+                        "image_name"
+                    ],
+                    "properties": {
+                        "name": {
+                            "description": "Name for the EE to be created in automation controller",
+                            "type": "string"
+                        },
+                        "description": {
+                            "description": "Description for the EE to be created in automation controller",
+                            "type": "string"
+                        },
+                        "image_name": {
+                            "description": "Full location for the EE image, including the container registry, image name, and version tag",
+                            "type": "string"
+                        },
+                        "pull": {
+                            "description": "Whether to pull the EE image before running",
+                            "type": "string",
+                            "enum": [
+                                "always",
+                                "missing",
+                                "never"
+                            ]
+                        }
+                    }
+                },
+                "controller_labels": {
+                    "description": "Labels to create for the pattern if not already present in automation controller",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "minItems": 1,
+                    "uniqueItems": true
+                },
+                "controller_job_templates": {
+                    "description": "A list of one or more job templates to be created in automation controller",
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "type": "object",
+                        "required": [
+                            "name",
+                            "description",
+                            "playbook"
+                        ],
+                        "properties": {
+                            "name": {
+                                "description": "Name for the job template to be created in automation controller",
+                                "type": "string"
+                            },
+                            "description": {
+                                "description": "Description for the job template to be created in automation controller",
+                                "type": "string"
+                            },
+                            "execution_environment": {
+                                "description": "Name of the execution environment to use for job template execution",
+                                "type": "string"
+                            },
+                            "playbook": {
+                                "description": "Name of the playbook file included in the pattern `automations` directory",
+                                "type": "string"
+                            },
+                            "fields_required_at_launch": {
+                                "description": "Fields that must be selected by the user when launching the job template in automation controller",
+                                "type": "array",
+                                "items": {
+                                    "type": "string",
+                                    "enum": [
+                                        "credential",
+                                        "inventory",
+                                        "verbosity"
+                                    ]
+                                }
+                            },
+                            "labels": {
+                                "description": "List of labels to apply to the job template",
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                },
+                                "minItems": 1,
+                                "uniqueItems": true
+                            },
+                            "survey": {
+                                "description": "A survey that captures required and optional variables from the user for configuring job templates",
+                                "type": "object",
+                                "required": [
+                                    "name",
+                                    "description",
+                                    "spec"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "description": "Name of the survey"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "description": "Description of the survey"
+                                    },
+                                    "spec": {
+                                        "type": "array",
+                                        "description": "List of survey questions",
+                                        "items": {
+                                            "type": "object",
+                                            "required": [
+                                                "type",
+                                                "question_name",
+                                                "question_description",
+                                                "variable",
+                                                "required"
+                                            ],
+                                            "properties": {
+                                                "type": {
+                                                    "type": "string",
+                                                    "description": "Type of input field",
+                                                    "enum": [
+                                                        "text",
+                                                        "multiplechoice",
+                                                        "textarea"
+                                                    ]
+                                                },
+                                                "question_name": {
+                                                    "type": "string",
+                                                    "description": "Human-readable question title"
+                                                },
+                                                "question_description": {
+                                                    "type": "string",
+                                                    "description": "Description or help text for the question"
+                                                },
+                                                "variable": {
+                                                    "type": "string",
+                                                    "description": "Variable name used to store the answer"
+                                                },
+                                                "required": {
+                                                    "type": "boolean",
+                                                    "description": "Whether this question must be answered"
+                                                },
+                                                "choices": {
+                                                    "type": "array",
+                                                    "description": "List of selectable values for multiple choice questions",
+                                                    "items": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "default": {
+                                                    "type": "string",
+                                                    "description": "Default value for the input field"
+                                                }
+                                            },
+                                            "allOf": [
+                                                {
+                                                    "if": {
+                                                        "properties": {
+                                                            "type": {
+                                                                "const": "multiplechoice"
+                                                            }
+                                                        }
+                                                    },
+                                                    "then": {
+                                                        "required": [
+                                                            "choices"
+                                                        ]
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
