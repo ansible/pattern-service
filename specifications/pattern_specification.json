@@ -18,15 +18,16 @@
             "type": "string"
         },
         "name": {
-            "description": "Human readable name for the pattern",
+            "description": "Machine readable name for the pattern. Must match the directory name",
+            "pattern": "^[a-z0-9_]+$",
             "type": "string"
         },
         "title": {
-            "description": "Human readable title for the pattern, may be used for pattern catalog and display purposes",
+            "description": "Human readable title for the pattern, may be used for pattern catalog and display purposes. It MUST be under TBD characters and MUST start with an action verb (e.g. Create an instance)",
             "type": "string"
         },
         "description": {
-            "description": "A detailed description for the pattern functionality",
+            "description": "A detailed explanation of what the pattern does. Use complete sentences to describe its functionality. This must provide more information than the short description and must be under TBD characters",
             "type": "string"
         },
         "short_description": {
@@ -48,12 +49,11 @@
             "required": [
                 "controller_project",
                 "controller_execution_environment",
-                "controller_labels",
                 "controller_job_templates"
             ],
             "properties": {
                 "controller_project": {
-                    "description": "Definition for the automation controller project",
+                    "description": "Information about the project to be created in automation controller. Every pattern MUST specify a controller project, which will be sourced from the pattern's parent collection published in private automation hub",
                     "type": "object",
                     "required": [
                         "name",
@@ -67,32 +67,11 @@
                         "description": {
                             "description": "Description for the project to be created in automation controller",
                             "type": "string"
-                        },
-                        "scm_type": {
-                            "description": "Source control type to use for the project",
-                            "type": "string",
-                            "enum": [
-                                "git",
-                                "svn",
-                                "insights"
-                            ]
-                        },
-                        "scm_url": {
-                            "description": "Source control URL to use for the project",
-                            "type": "string"
-                        },
-                        "scm_branch": {
-                            "description": "Source control branch to use for the project",
-                            "type": "string"
-                        },
-                        "scm_update_on_launch": {
-                            "description": "Whether to update the project from source control when a job using the project is launched",
-                            "type": "boolean"
                         }
                     }
                 },
                 "controller_execution_environment": {
-                    "description": "Definition for the execution environment",
+                    "description": "Definition of the execution environment (EE) to be used by the pattern. An EE should be included if the pattern requires dependencies that are not available in the default controller EE. The EE image MUST be published in Private Automation Hub",
                     "type": "object",
                     "required": [
                         "name",
@@ -153,24 +132,24 @@
                                 "type": "string"
                             },
                             "execution_environment": {
-                                "description": "Name of the execution environment to use for job template execution",
+                                "description": "Name of the execution environment to use for job template execution. Must match the EE name defined in controller_execution_environment, IF defined",
                                 "type": "string"
                             },
                             "playbook": {
                                 "description": "Name of the playbook file included in the pattern `automations` directory",
                                 "type": "string"
                             },
-                            "fields_required_at_launch": {
-                                "description": "Fields that must be selected by the user when launching the job template in automation controller",
-                                "type": "array",
-                                "items": {
-                                    "type": "string",
-                                    "enum": [
-                                        "credential",
-                                        "inventory",
-                                        "verbosity"
-                                    ]
-                                }
+                            "ask_credential_on_launch": {
+                                "description": "Whether the user must select a credential when launching the job template",
+                                "type": "boolean"
+                            },
+                            "ask_inventory_on_launch": {
+                                "description": "Whether the user must select an inventory when launching the job template",
+                                "type": "boolean"
+                            },
+                            "ask_verbosity_on_launch": {
+                                "description": "Whether the user must choose a verbosity level when launching the job template",
+                                "type": "boolean"
                             },
                             "labels": {
                                 "description": "List of labels to apply to the job template",
@@ -216,8 +195,11 @@
                                                     "description": "Type of input field",
                                                     "enum": [
                                                         "text",
+                                                        "password",
+                                                        "integer",
+                                                        "float",
                                                         "multiplechoice",
-                                                        "textarea"
+                                                        "multiselect"
                                                     ]
                                                 },
                                                 "question_name": {
