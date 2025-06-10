@@ -6,7 +6,7 @@ from django.db import models
 # Create your models here.
 
 
-class Pattern(models.Model):
+class Pattern(CommonModel):
     class Meta:
         app_label = 'core'
         ordering = ['id']
