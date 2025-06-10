@@ -18,7 +18,7 @@
             "type": "string"
         },
         "name": {
-            "description": "Machine readable name for the pattern. Must match the directory name",
+            "description": "Machine readable name for the pattern. MUST match the directory name",
             "pattern": "^[a-z0-9_]+$",
             "type": "string"
         },
@@ -132,7 +132,7 @@
                                 "type": "string"
                             },
                             "execution_environment": {
-                                "description": "Name of the execution environment to use for job template execution. Must match the EE name defined in controller_execution_environment, IF defined",
+                                "description": "Name of the execution environment to use for job template execution. MUST match the EE name defined in controller_execution_environment, IF defined",
                                 "type": "string"
                             },
                             "playbook": {
