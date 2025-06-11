@@ -1,6 +1,6 @@
 from django.test import TestCase
-from core.models import Pattern, ControllerLabel, PatternInstance
-from core.serializers import PatternSerializer, ControllerLabelSerializer, PatternInstanceSerializer
+from core.models import Pattern, ControllerLabel, PatternInstance, Automation
+from core.serializers import PatternSerializer, ControllerLabelSerializer, PatternInstanceSerializer, AutomationSerializer
 
 
 class PatternSerializerTest(TestCase):
@@ -122,3 +122,64 @@ class PatternInstanceSerializerTest(TestCase):
         }
         serializer = PatternInstanceSerializer(data=input_data)
         self.assertTrue(serializer.is_valid(), serializer.errors)
+
+
+class AutomationSerializerTest(TestCase):
+    def setUp(self):
+        self.pattern = Pattern.objects.create(
+            collection_name="mynamespace.mycollection",
+            collection_version="1.0.0",
+            collection_version_uri="https://example.com/mynamespace/mycollection/",
+            pattern_name="example_pattern",
+            pattern_definition={"Test": "Value"},
+        )
+        self.pattern_instance = PatternInstance.objects.create(
+            organization_id=1,
+            controller_project_id=123,
+            controller_ee_id=987,
+            credentials={"user": "admin"},
+            executors=[{"executor_type": "local"}],
+            pattern=self.pattern,
+        )
+        self.automation = Automation.objects.create(
+            automation_type='job_template',
+            automation_id=123,
+            primary=False,
+            pattern_instance=self.pattern_instance
+        )
+
+    def test_serializer_fields_present(self):
+        serializer = AutomationSerializer(instance=self.automation)
+        data = serializer.data
+
+        self.assertIn('id', data)
+        self.assertIn('automation_type', data)
+        self.assertIn('automation_id', data)
+        self.assertIn('primary', data)
+        self.assertIn('pattern_instance', data)
+
+        self.assertEqual(data['id'], self.automation.id)
+        self.assertEqual(data['automation_type'], self.automation.automation_type)
+        self.assertEqual(data['automation_id'], self.automation.automation_id)
+        self.assertEqual(data['primary'], self.automation.primary)
+
+    def test_serializer_validation_success(self):
+        input_data = {
+            'automation_type': 'job_template',
+            'automation_id': 123,
+            'primary': False,
+            'pattern_instance': self.pattern_instance.id
+        }
+        serializer = AutomationSerializer(data=input_data)
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+
+    def test_serializer_validation_failure(self):
+        input_data = {
+            'automation_type': '',
+            'automation_id': '',
+            'primary': False,
+        }
+        serializer = AutomationSerializer(data=input_data)
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('automation_type', serializer.errors)
+        self.assertIn('automation_id', serializer.errors)

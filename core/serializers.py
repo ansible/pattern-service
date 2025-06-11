@@ -51,7 +51,6 @@ class AutomationSerializer(CommonModelSerializer):
         model = Automation
         fields = CommonModelSerializer.Meta.fields + [
             'id',
-            'automation_type_choices',
             'automation_type',
             'automation_id',
             'primary',
