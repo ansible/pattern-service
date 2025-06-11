@@ -48,3 +48,4 @@ sqlparse==0.5.3
     # via django
 typing-extensions==4.13.2
     # via mypy
+django-ansible-base

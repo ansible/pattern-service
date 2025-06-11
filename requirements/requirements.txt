@@ -6,7 +6,7 @@
 #
 asgiref==3.8.1
     # via django
-django==5.2.1
+django==4.2.23
     # via
     #   -r requirements.in
     #   djangorestframework
@@ -14,3 +14,4 @@ djangorestframework==3.16.0
     # via -r requirements.in
 sqlparse==0.5.3
     # via django
+django-ansible-base
