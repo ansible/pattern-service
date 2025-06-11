@@ -37,13 +37,13 @@ class PatternInstanceSerializer(CommonModelSerializer):
             'id',
             'organization_id',
             'controller_project_id',
-            'controller_execution_environment_id',
+            'controller_ee_id',
             'credentials',
             'executors',
             'pattern',
             'controller_labels',
         ]
-        read_only_fields = ['controller_project_id', 'controller_execution_environment_id']
+        read_only_fields = ['controller_project_id', 'controller_ee_id']
 
 
 class AutomationSerializer(CommonModelSerializer):
