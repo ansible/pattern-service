@@ -24,7 +24,7 @@ class ControllerLabel(CommonModel):
         app_label = 'core'
         ordering = ['id']
 
-    label_id: models.BigIntegerField = models.BigIntegerField(unique=True)
+    label_id: models.PositiveBigIntegerField = models.PositiveBigIntegerField(unique=True)
 
 
 class PatternInstance(CommonModel):
@@ -33,9 +33,9 @@ class PatternInstance(CommonModel):
         ordering = ['id']
         constraints = [models.UniqueConstraint(fields=["organization_id", "pattern"], name="unique_pattern_instance_organization")]
 
-    organization_id: models.BigIntegerField = models.BigIntegerField()
-    controller_project_id: models.BigIntegerField = models.BigIntegerField(blank=True)
-    controller_ee_id: models.BigIntegerField = models.BigIntegerField(null=True, blank=True)
+    organization_id: models.PositiveBigIntegerField = models.PositiveBigIntegerField()
+    controller_project_id: models.PositiveBigIntegerField = models.PositiveBigIntegerField(blank=True)
+    controller_ee_id: models.PositiveBigIntegerField = models.PositiveBigIntegerField(null=True, blank=True)
     credentials: models.JSONField = models.JSONField()
     executors: models.JSONField = models.JSONField(null=True, blank=True)
 
@@ -50,7 +50,7 @@ class Automation(CommonModel):
 
     automation_type_choices = (("job_template", "Job template"),)
     automation_type: models.CharField = models.CharField(max_length=200, choices=automation_type_choices)
-    automation_id: models.BigIntegerField = models.BigIntegerField()
+    automation_id: models.PositiveBigIntegerField = models.PositiveBigIntegerField()
     primary: models.BooleanField = models.BooleanField(default=False)
 
     pattern_instance: models.ForeignKey = models.ForeignKey(PatternInstance, on_delete=models.CASCADE, related_name="automations")
