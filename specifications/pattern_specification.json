@@ -51,7 +51,6 @@
             "type": "object",
             "required": [
                 "controller_project",
-                "controller_execution_environment",
                 "controller_job_templates"
             ],
             "properties": {
