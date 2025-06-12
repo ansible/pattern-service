@@ -45,6 +45,11 @@ class PatternInstanceSerializer(CommonModelSerializer):
         ]
         read_only_fields = ['controller_project_id', 'controller_ee_id', 'controller_labels']
 
+    def validate_organization_id(self, value):
+        if value <= 0:
+            raise serializers.ValidationError("organization_id must be a positive integer.")
+        return value
+
 
 class AutomationSerializer(CommonModelSerializer):
     class Meta(CommonModelSerializer.Meta):
@@ -56,3 +61,8 @@ class AutomationSerializer(CommonModelSerializer):
             'primary',
             'pattern_instance',
         ]
+
+    def validate_automation_id(self, value):
+        if value <= 0:
+            raise serializers.ValidationError("automation_id must be a positive integer.")
+        return value
