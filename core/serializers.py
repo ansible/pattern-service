@@ -16,7 +16,7 @@ class PatternSerializer(CommonModelSerializer):
             'pattern_name',
             'pattern_definition',
         ]
-        read_only_fields = ['pattern_definition']
+        read_only_fields = ['pattern_definition', 'collection_version_uri']
 
 
 class ControllerLabelSerializer(CommonModelSerializer):
@@ -25,9 +25,9 @@ class ControllerLabelSerializer(CommonModelSerializer):
         fields = CommonModelSerializer.Meta.fields + ['id', 'label_id']
 
     def validate_label_id(self, value):
-            if value <= 0:
-                raise serializers.ValidationError("label_id must be a positive integer.")
-            return value
+        if value <= 0:
+            raise serializers.ValidationError("label_id must be a positive integer.")
+        return value
 
 
 class PatternInstanceSerializer(CommonModelSerializer):
@@ -38,12 +38,12 @@ class PatternInstanceSerializer(CommonModelSerializer):
             'organization_id',
             'controller_project_id',
             'controller_ee_id',
+            'controller_labels',
             'credentials',
             'executors',
             'pattern',
-            'controller_labels',
         ]
-        read_only_fields = ['controller_project_id', 'controller_ee_id']
+        read_only_fields = ['controller_project_id', 'controller_ee_id', 'controller_labels']
 
 
 class AutomationSerializer(CommonModelSerializer):

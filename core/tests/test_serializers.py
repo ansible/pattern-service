@@ -1,11 +1,12 @@
 from django.test import TestCase
-from core.models import Pattern, ControllerLabel, PatternInstance, Automation
+from core.models import Pattern, PatternInstance, ControllerLabel, Automation
 from core.serializers import PatternSerializer, ControllerLabelSerializer, PatternInstanceSerializer, AutomationSerializer
 
 
-class PatternSerializerTest(TestCase):
-    def setUp(self):
-        self.pattern = Pattern.objects.create(
+class SharedTestFixture(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.pattern = Pattern.objects.create(
             collection_name="mynamespace.mycollection",
             collection_version="1.0.0",
             collection_version_uri="https://example.com/mynamespace/mycollection/",
@@ -13,6 +14,17 @@ class PatternSerializerTest(TestCase):
             pattern_definition={"Test": "Value"},
         )
 
+        cls.pattern_instance = PatternInstance.objects.create(
+            organization_id=1,
+            controller_project_id=123,
+            controller_ee_id=987,
+            credentials={"user": "admin"},
+            executors=[{"executor_type": "container"}],
+            pattern=cls.pattern,
+        )
+
+
+class PatternSerializerTest(SharedTestFixture):
     def test_serializer_fields_present(self):
         serializer = PatternSerializer(instance=self.pattern)
         data = serializer.data
@@ -56,8 +68,9 @@ class PatternSerializerTest(TestCase):
 
 
 class ControllerLabelSerializerTest(TestCase):
-    def setUp(self):
-        self.label = ControllerLabel.objects.create(label_id=123)
+    @classmethod
+    def setUpTestData(cls):
+        cls.label = ControllerLabel.objects.create(label_id=123)
 
     def test_serializer_fields(self):
         serializer = ControllerLabelSerializer(instance=self.label)
@@ -81,26 +94,9 @@ class ControllerLabelSerializerTest(TestCase):
         self.assertIn('label_id', serializer.errors)
 
 
-class PatternInstanceSerializerTest(TestCase):
-    def setUp(self):
-        self.pattern = Pattern.objects.create(
-            collection_name="mynamespace.mycollection",
-            collection_version="1.0.0",
-            collection_version_uri="https://example.com/mynamespace/mycollection/",
-            pattern_name="example_pattern",
-            pattern_definition={"Test": "Value"},
-        )
-        self.instance = PatternInstance.objects.create(
-            organization_id=1,
-            controller_project_id=123,
-            controller_ee_id=987,
-            credentials={"user": "admin"},
-            executors=[{"executor_type": "local"}],
-            pattern=self.pattern,
-        )
-
+class PatternInstanceSerializerTest(SharedTestFixture):
     def test_serializer_fields(self):
-        serializer = PatternInstanceSerializer(instance=self.instance)
+        serializer = PatternInstanceSerializer(instance=self.pattern_instance)
         data = serializer.data
 
         self.assertIn('id', data)
@@ -117,35 +113,22 @@ class PatternInstanceSerializerTest(TestCase):
             "controller_project_id": 123,
             "controller_ee_id": 987,
             "credentials": '{"user": "admin"}',
-            "executors": '[{"executor_type": "local"}]',
+            "executors": '[{"executor_type": "container"}]',
             "pattern": self.pattern.id,
         }
         serializer = PatternInstanceSerializer(data=input_data)
         self.assertTrue(serializer.is_valid(), serializer.errors)
 
 
-class AutomationSerializerTest(TestCase):
-    def setUp(self):
-        self.pattern = Pattern.objects.create(
-            collection_name="mynamespace.mycollection",
-            collection_version="1.0.0",
-            collection_version_uri="https://example.com/mynamespace/mycollection/",
-            pattern_name="example_pattern",
-            pattern_definition={"Test": "Value"},
-        )
-        self.pattern_instance = PatternInstance.objects.create(
-            organization_id=1,
-            controller_project_id=123,
-            controller_ee_id=987,
-            credentials={"user": "admin"},
-            executors=[{"executor_type": "local"}],
-            pattern=self.pattern,
-        )
-        self.automation = Automation.objects.create(
+class AutomationSerializerTest(SharedTestFixture):
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.automation = Automation.objects.create(
             automation_type='job_template',
-            automation_id=123,
-            primary=False,
-            pattern_instance=self.pattern_instance
+            automation_id=321,
+            primary=True,
+            pattern_instance=cls.pattern_instance,
         )
 
     def test_serializer_fields_present(self):
@@ -164,12 +147,7 @@ class AutomationSerializerTest(TestCase):
         self.assertEqual(data['primary'], self.automation.primary)
 
     def test_serializer_validation_success(self):
-        input_data = {
-            'automation_type': 'job_template',
-            'automation_id': 123,
-            'primary': False,
-            'pattern_instance': self.pattern_instance.id
-        }
+        input_data = {'automation_type': 'job_template', 'automation_id': 123, 'primary': False, 'pattern_instance': self.pattern_instance.id}
         serializer = AutomationSerializer(data=input_data)
         self.assertTrue(serializer.is_valid(), serializer.errors)
 
