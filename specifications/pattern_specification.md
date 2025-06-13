@@ -80,6 +80,8 @@ Templates for various types of catalog software in which patterns may be publish
 
 ## Example Pattern Directory
 
+```txt
+
 /extensions/patterns/
 ├── network.backup/ # Backup pattern directory
 │ ├── setup # Backup pattern definition
@@ -98,6 +100,7 @@ Templates for various types of catalog software in which patterns may be publish
 │ ├── templates/ # Directory containing catalog templates
 │ │ ├── rhdh.yaml # Display template for RHDH catalog
 
+```
 
 ## Other Pattern Requirements
 
