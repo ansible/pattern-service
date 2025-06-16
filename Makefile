@@ -8,7 +8,7 @@ IMAGE_TAG ?= latest
 # Build the Docker image
 build:
 	@echo "Building container image..."
-	$(CONTAINER_RUNTIME) build -t $(IMAGE_NAME):$(IMAGE_TAG) -f Dockerfile.dev .
+	$(CONTAINER_RUNTIME) build -t $(IMAGE_NAME):$(IMAGE_TAG) -f Dockerfile.dev --arch amd64 .
 
 ensure-namespace:
 ifndef QUAY_NAMESPACE

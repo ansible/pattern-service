@@ -16,6 +16,6 @@ COPY manage.py .
 
 RUN python3 manage.py migrate
 
-EXPOSE 8000
+EXPOSE 5000
 
-CMD ["python3", "/app/manage.py", "runserver", "0.0.0.0:8000", "--noreload"]
+CMD ["python3", "/app/manage.py", "runserver", "0.0.0.0:5000"]
