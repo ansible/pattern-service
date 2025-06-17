@@ -3,8 +3,6 @@ from __future__ import annotations
 from ansible_base.lib.abstract_models import CommonModel
 from django.db import models
 
-# Create your models here.
-
 
 class Pattern(CommonModel):
     class Meta:
