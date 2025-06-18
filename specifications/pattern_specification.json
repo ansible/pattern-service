@@ -47,7 +47,7 @@
             "uniqueItems": true
         },
         "aap_resources": {
-            "description": "Define the resources required in AAP to run the pattern automation",
+            "description": "Define the resources required in Ansible Automation Platform (AAP) to run the pattern automation",
             "type": "object",
             "required": [
                 "controller_project",
@@ -74,7 +74,7 @@
                     }
                 },
                 "controller_execution_environment": {
-                    "description": "Definition of the execution environment (EE) to be used by the pattern. An EE should be included if the pattern requires dependencies that are not available in the default controller EE. The EE image MUST be available in Private Automation Hub",
+                    "description": "Definition of the execution environment (EE) to be used by the pattern. An EE should be included if the pattern requires dependencies that are not available in the default controller EE. The EE image MUST be available in Private Automation Hub (PAH)",
                     "type": "object",
                     "required": [
                         "name",
@@ -92,7 +92,7 @@
                             "type": "string"
                         },
                         "image_name": {
-                            "description": "Name of the execution environment (EE) image as published in Private Automation Hub(PAH). Use the format <namespace>/<image_name>, such as 'cloud/aws_ops_ee'. If the pattern is created before the image is published, the image MUST be uploaded to PAH with the name specified here. If the image is already in PAH, this value MUST exactly match the existing image name",
+                            "description": "Name of the execution environment (EE) image as published in Private Automation Hub (PAH). Use the format <namespace>/<image_name>, such as 'cloud/aws_ops_ee'. If the pattern is created before the image is published, the image MUST be uploaded to PAH with the name specified here. If the image is already in PAH, this value MUST exactly match the existing image name",
                             "type": "string"
                         },
                         "pull": {
