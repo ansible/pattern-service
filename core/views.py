@@ -1,5 +1,3 @@
-from django.shortcuts import render
-
 from rest_framework.viewsets import ModelViewSet
 from ansible_base.lib.utils.views.ansible_base import AnsibleBaseView
 from .models import Pattern, PatternInstance, ControllerLabel, Automation

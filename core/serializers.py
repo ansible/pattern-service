@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from rest_framework import serializers
 from ansible_base.lib.serializers.common import CommonModelSerializer
 from .models import Pattern, PatternInstance, ControllerLabel, Automation
 
