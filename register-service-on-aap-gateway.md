@@ -37,7 +37,7 @@ sed -i -e s/'<quay_username>'/abikouo1/ manifests/base/apps/pattern-service/k8s/
 cd <destination>
 
 # deploy
-AAP_VERSION=2.6 make app
+AAP_VERSION=2.6 make aap
 
 # apply license
 AAP_VERSION=2.6 make aap-apply-license
