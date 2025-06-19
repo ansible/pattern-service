@@ -13,7 +13,7 @@ This page describes how to add the pattern service application in [aap-dev](http
 podman login -u="<quay_username>" -p="<quay_registry_secret>" quay.io
 
 # build and push container image to registry
-QUAY_NAMESPACE=abikouo1 make push
+QUAY_NAMESPACE=<quay_username> make push
 ```
 
 **Once the image is built and pushed, go to https://quay.io/organization/<quay_username>, select the image, and make it public.**
