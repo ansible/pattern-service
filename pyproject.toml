@@ -5,8 +5,7 @@ description = "Pattern Service Django project"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "Django>=5.0,<6.0",
-    "djangorestframework>=3.16.0,<3.17"
+    "django-ansible-base==2025.5.8"
 ]
 
 [tool.black]
