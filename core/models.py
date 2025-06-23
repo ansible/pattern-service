@@ -12,9 +12,9 @@ class Pattern(CommonModel):
 
     collection_name: models.CharField = models.CharField(max_length=200)
     collection_version: models.CharField = models.CharField(max_length=50)
-    collection_version_uri: models.CharField = models.CharField(max_length=200, blank=True)
+    collection_version_uri: models.CharField = models.CharField(max_length=200, blank=True, null=True)
     pattern_name: models.CharField = models.CharField(max_length=200)
-    pattern_definition: models.JSONField = models.JSONField(blank=True)
+    pattern_definition: models.JSONField = models.JSONField(blank=True, null=True)
 
 
 class ControllerLabel(CommonModel):
@@ -32,13 +32,13 @@ class PatternInstance(CommonModel):
         constraints = [models.UniqueConstraint(fields=["organization_id", "pattern"], name="unique_pattern_instance_organization")]
 
     organization_id: models.PositiveBigIntegerField = models.PositiveBigIntegerField()
-    controller_project_id: models.PositiveBigIntegerField = models.PositiveBigIntegerField(blank=True)
+    controller_project_id: models.PositiveBigIntegerField = models.PositiveBigIntegerField(blank=True, null=True)
     controller_ee_id: models.PositiveBigIntegerField = models.PositiveBigIntegerField(null=True, blank=True)
     credentials: models.JSONField = models.JSONField()
     executors: models.JSONField = models.JSONField(null=True, blank=True)
 
     pattern: models.ForeignKey = models.ForeignKey(Pattern, on_delete=models.CASCADE, related_name="pattern_instances")
-    controller_labels: models.ManyToManyField = models.ManyToManyField(ControllerLabel, related_name="pattern_instances", blank=True)
+    controller_labels: models.ManyToManyField = models.ManyToManyField(ControllerLabel, related_name="pattern_instances", blank=True, null=True)
 
 
 class Automation(CommonModel):
