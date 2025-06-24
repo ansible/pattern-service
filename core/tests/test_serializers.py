@@ -1,6 +1,13 @@
 from django.test import TestCase
-from core.models import Pattern, PatternInstance, ControllerLabel, Automation
-from core.serializers import PatternSerializer, ControllerLabelSerializer, PatternInstanceSerializer, AutomationSerializer
+
+from core.models import Automation
+from core.models import ControllerLabel
+from core.models import Pattern
+from core.models import PatternInstance
+from core.serializers import AutomationSerializer
+from core.serializers import ControllerLabelSerializer
+from core.serializers import PatternInstanceSerializer
+from core.serializers import PatternSerializer
 
 
 class SharedTestFixture(TestCase):

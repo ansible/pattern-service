@@ -1,7 +1,11 @@
 from __future__ import annotations
 
 from ansible_base.lib.serializers.common import CommonModelSerializer
-from .models import Pattern, PatternInstance, ControllerLabel, Automation
+
+from .models import Automation
+from .models import ControllerLabel
+from .models import Pattern
+from .models import PatternInstance
 
 
 class PatternSerializer(CommonModelSerializer):

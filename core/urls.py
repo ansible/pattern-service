@@ -1,7 +1,9 @@
 from ansible_base.lib.routers import AssociationResourceRouter
 
-from .views import PatternViewSet, ControllerLabelViewSet, PatternInstanceViewSet, AutomationViewSet
-
+from .views import AutomationViewSet
+from .views import ControllerLabelViewSet
+from .views import PatternInstanceViewSet
+from .views import PatternViewSet
 
 router = AssociationResourceRouter()
 router.register(r'patterns', PatternViewSet, basename='pattern')

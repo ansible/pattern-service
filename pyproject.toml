@@ -26,5 +26,5 @@ build-backend = "setuptools.build_meta"
 packages = ["pattern_service"]
 
 [[tool.mypy.overrides]]
-module = ["ansible_base.*"]
+module = ["ansible_base.*", "rest_framework.*"]
 ignore_missing_imports = true

@@ -1,7 +1,15 @@
-from rest_framework.viewsets import ModelViewSet
 from ansible_base.lib.utils.views.ansible_base import AnsibleBaseView
-from .models import Pattern, PatternInstance, ControllerLabel, Automation
-from .serializers import PatternSerializer, ControllerLabelSerializer, PatternInstanceSerializer, AutomationSerializer
+from rest_framework.viewsets import ModelViewSet
+
+from .models import Automation
+from .models import ControllerLabel
+from .models import Pattern
+from .models import PatternInstance
+from .serializers import AutomationSerializer
+from .serializers import ControllerLabelSerializer
+from .serializers import PatternInstanceSerializer
+from .serializers import PatternSerializer
+
 
 class CoreViewSet(AnsibleBaseView):
     pass
