@@ -38,7 +38,7 @@ class PatternInstance(CommonModel):
     executors: models.JSONField = models.JSONField(null=True, blank=True)
 
     pattern: models.ForeignKey = models.ForeignKey(Pattern, on_delete=models.CASCADE, related_name="pattern_instances")
-    controller_labels: models.ManyToManyField = models.ManyToManyField(ControllerLabel, related_name="pattern_instances", blank=True, null=True)
+    controller_labels: models.ManyToManyField = models.ManyToManyField(ControllerLabel, related_name="pattern_instances", blank=True)
 
 
 class Automation(CommonModel):
