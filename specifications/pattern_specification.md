@@ -60,7 +60,7 @@ Pattern playbook files are included in the `/extensions/patterns/<pattern_name>/
 
 #### Playbook Requirements
 
-- All required and optional input variables to a pattern playbook **MUST** be defined in a play argument spec following this example of the [play argument spec format]([https://github.com/sivel/play-argument-spec/blob/main/README.md](https://github.com/ansible/ansible-creator/blob/main/src/ansible_creator/resources/playbook_project/argspec_validation_plays.meta.yml)).
+- All required and optional input variables to a pattern playbook **MUST** be defined in a play argument spec following this example of the [play argument spec format](https://github.com/ansible/ansible-creator/blob/main/src/ansible_creator/resources/playbook_project/argspec_validation_plays.meta.yml).
 - If a pattern playbook requires any user-provided information other than variables to launch as a job template, such as inventory or credentials, those **MUST** be specified as `ask_<field>_at_launch` in the relevant `controller_job_templates` section of the pattern definition meta file.
 
 ## Optional Files
@@ -71,12 +71,6 @@ Templates for various types of catalog software in which patterns may be publish
 
 - A pattern **MAY** contain a `templates/` directory to hold templates specific to catalogs that may publish the pattern, such as Red Hat Developer Hub or ServiceNow.
 - The `templates/` directory **MAY** contain one or more catalog template files.
-
-### `execution_environments/`
-
-- A pattern **MAY** contain an `execution_environments/` directory.
-- If included, the `execution_environments/` directory **MUST** contain exactly one execution environment definition file following the [documented format](https://ansible.readthedocs.io/projects/builder/en/stable/definition).
-- The execution environment definition file **MUST** include all dependencies needed to execute the pattern automation(s), including system, Python, and Ansible collection dependencies.
 
 ## Example Pattern Directory
 
@@ -99,3 +93,4 @@ Templates for various types of catalog software in which patterns may be publish
 - A pattern **MUST** inherit the version number of the collection that contains it.
 - A pattern **MUST** be valid according to the requirements specified in this document, including validation of each file contained in the pattern against its relevant schema.
 - Changes to patterns **MUST** be noted in collection-level changelogs and release notes.
+- All system, python, and Ansible collection dependencies needed to run a pattern's automations **MUST** be declared in the collection's dependency files, including but not limited to: `galaxy.yml`, `requirements.txt`, and `execution_environment.yml`.
