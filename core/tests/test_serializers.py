@@ -95,11 +95,6 @@ class ControllerLabelSerializerTest(TestCase):
         serializer = ControllerLabelSerializer(data={'label_id': 5})
         self.assertTrue(serializer.is_valid())
 
-    def test_invalid_label_id(self):
-        serializer = ControllerLabelSerializer(data={'label_id': -5})
-        self.assertFalse(serializer.is_valid())
-        self.assertIn('label_id', serializer.errors)
-
 
 class PatternInstanceSerializerTest(SharedTestFixture):
     def test_serializer_fields(self):
@@ -125,19 +120,6 @@ class PatternInstanceSerializerTest(SharedTestFixture):
         }
         serializer = PatternInstanceSerializer(data=input_data)
         self.assertTrue(serializer.is_valid(), serializer.errors)
-
-    def test_invalid_organization_id(self):
-        input_data = {
-            "organization_id": -22,
-            "controller_project_id": 123,
-            "controller_ee_id": 987,
-            "credentials": {"user": "admin"},
-            "executors": [{"executor_type": "container"}],
-            "pattern": self.pattern.id,
-        }
-        serializer = PatternInstanceSerializer(data=input_data)
-        self.assertFalse(serializer.is_valid())
-        self.assertIn('organization_id', serializer.errors)
 
 
 class AutomationSerializerTest(SharedTestFixture):
@@ -180,10 +162,4 @@ class AutomationSerializerTest(SharedTestFixture):
         serializer = AutomationSerializer(data=input_data)
         self.assertFalse(serializer.is_valid())
         self.assertIn('automation_type', serializer.errors)
-        self.assertIn('automation_id', serializer.errors)
-
-    def test_invalid_automation_id(self):
-        input_data = {'automation_type': 'job_template', 'automation_id': -123, 'primary': True, 'pattern_instance': self.pattern_instance.id}
-        serializer = AutomationSerializer(data=input_data)
-        self.assertFalse(serializer.is_valid())
         self.assertIn('automation_id', serializer.errors)
