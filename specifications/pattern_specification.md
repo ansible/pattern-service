@@ -20,7 +20,7 @@ This document follows the IETF [RFC2119](https://datatracker.ietf.org/doc/html/r
 
 ## Support
 
-This pattern specification is supported and maintained by Ansible. To submit support or other requests for the specification, please <do whatever the method is for requesting support>.
+This pattern specification is supported and maintained by Ansible. To submit support or other requests for the specification, please contact Red Hat support.
 
 Individual patterns that implement this specification are the responsibility of the collection maintainers for the collections in which they reside. For support or feature requests for individual patterns, contact their collection owners.
 
