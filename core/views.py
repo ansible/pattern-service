@@ -15,6 +15,7 @@ from .serializers import PatternInstanceSerializer
 from .serializers import PatternSerializer
 from .serializers import TaskSerializer
 
+
 class CoreViewSet(AnsibleBaseView):
     pass
 

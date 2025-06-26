@@ -166,6 +166,7 @@ class AutomationSerializerTest(SharedTestFixture):
         self.assertIn('automation_type', serializer.errors)
         self.assertIn('automation_id', serializer.errors)
 
+
 class TaskSerializerTest(SharedTestFixture):
     def test_serializer_fields_present(self):
         task = Task.objects.create(status="Initiated", details={"info": "test"})
