@@ -52,3 +52,19 @@ class Automation(CommonModel):
     primary: models.BooleanField = models.BooleanField(default=False)
 
     pattern_instance: models.ForeignKey = models.ForeignKey(PatternInstance, on_delete=models.CASCADE, related_name="automations")
+
+
+class Task(CommonModel):
+    class Meta:
+        app_label = 'core'
+        ordering = ['id']
+
+    status_choices = (
+        ("Initiated", "Initiated"),
+        ("Running", "Running"),
+        ("Completed", "Completed"),
+        ("Failed", "Failed"),
+    )
+
+    status: models.CharField = models.CharField(max_length=20, choices=status_choices)
+    details: models.JSONField = models.JSONField(null=True, blank=True)

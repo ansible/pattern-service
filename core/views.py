@@ -2,16 +2,18 @@ from ansible_base.lib.utils.views.ansible_base import AnsibleBaseView
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
+from rest_framework.viewsets import ReadOnlyModelViewSet
 
 from .models import Automation
 from .models import ControllerLabel
 from .models import Pattern
 from .models import PatternInstance
+from .models import Task
 from .serializers import AutomationSerializer
 from .serializers import ControllerLabelSerializer
 from .serializers import PatternInstanceSerializer
 from .serializers import PatternSerializer
-
+from .serializers import TaskSerializer
 
 class CoreViewSet(AnsibleBaseView):
     pass
@@ -35,6 +37,11 @@ class PatternInstanceViewSet(CoreViewSet, ModelViewSet):
 class AutomationViewSet(CoreViewSet, ModelViewSet):
     queryset = Automation.objects.all()
     serializer_class = AutomationSerializer
+
+
+class TaskViewSet(ReadOnlyModelViewSet):
+    queryset = Task.objects.all()
+    serializer_class = TaskSerializer
 
 
 @api_view(["GET"])

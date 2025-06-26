@@ -4,10 +4,12 @@ from core.models import Automation
 from core.models import ControllerLabel
 from core.models import Pattern
 from core.models import PatternInstance
+from core.models import Task
 from core.serializers import AutomationSerializer
 from core.serializers import ControllerLabelSerializer
 from core.serializers import PatternInstanceSerializer
 from core.serializers import PatternSerializer
+from core.serializers import TaskSerializer
 
 
 class SharedTestFixture(TestCase):
@@ -163,3 +165,34 @@ class AutomationSerializerTest(SharedTestFixture):
         self.assertFalse(serializer.is_valid())
         self.assertIn('automation_type', serializer.errors)
         self.assertIn('automation_id', serializer.errors)
+
+class TaskSerializerTest(SharedTestFixture):
+    def test_serializer_fields_present(self):
+        task = Task.objects.create(status="Initiated", details={"info": "test"})
+        serializer = TaskSerializer(instance=task)
+        data = serializer.data
+
+        self.assertIn("id", data)
+        self.assertIn("status", data)
+        self.assertIn("details", data)
+        self.assertEqual(data["status"], "Initiated")
+        self.assertEqual(data["details"], {"info": "test"})
+
+    def test_serializer_validation_success(self):
+        input_data = {
+            "status": "Running",
+            "details": {"step": 1, "info": "in progress"},
+        }
+        serializer = TaskSerializer(data=input_data)
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+        self.assertEqual(serializer.validated_data["status"], "Running")
+        self.assertEqual(serializer.validated_data["details"], {"step": 1, "info": "in progress"})
+
+    def test_serializer_invalid_status(self):
+        input_data = {
+            "status": "UnknownStatus",
+            "details": {},
+        }
+        serializer = TaskSerializer(data=input_data)
+        self.assertFalse(serializer.is_valid())
+        self.assertIn("status", serializer.errors)
