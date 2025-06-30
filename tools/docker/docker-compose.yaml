@@ -1,0 +1,85 @@
+x-environment: &common-env
+  PATTERN_SERVICE_DB_HOST: ps_postgres
+  PATTERN_SERVICE_DB_PORT: 5432
+  PATTERN_SERVICE_DB_NAME: pattern_db
+  PATTERN_SERVICE_DB_USER: pattern
+  PATTERN_SERVICE_DB_PASSWORD: pattern123
+  PATTERN_SERVICE_FEATURE_DISPATCHERD: "true"
+services:
+  ps_postgres:
+    image: quay.io/sclorg/postgresql-15-c9s:latest
+    environment:
+      POSTGRESQL_USER: pattern
+      POSTGRESQL_PASSWORD: pattern123
+      POSTGRESQL_DATABASE: pattern_db
+    ports:
+      - '5432:5432'
+    volumes:
+      - 'postgres_data:/var/lib/pgsql/data'
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "pattern", "-d", "pattern_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    networks:
+      - dev
+
+  pattern-service-worker:
+    image: localhost/ansible-pattern-service-worker
+    environment: 
+      << : *common-env
+      PATTERN_SERVICE_DISPATCHERD_CONFIG_FILE: /app/dispatcher-worker.yml
+    build:
+      context: ../../
+      dockerfile: tools/docker/Dockerfile
+      target: dispatcher-image
+    command:
+      - /bin/bash
+      - -c
+      - aap-pattern-service-manage worker
+    depends_on:
+      ps_postgres:
+        condition: service_healthy
+    restart: always
+    networks:
+      - dev
+
+  pattern-service-api:
+    image: localhost/ansible-pattern-service-api
+    environment:
+      << : *common-env
+      PATTERN_SERVICE_DISPATCHERD_CONFIG_FILE: /app/dispatcher-api.yml
+    build:
+      context: ../../
+      dockerfile: tools/docker/Dockerfile
+      target: dispatcher-image
+    command:
+      - /bin/bash
+      - -c
+      - >-
+        aap-pattern-service-manage makemigrations
+        && aap-pattern-service-manage migrate
+        && aap-pattern-service-manage runserver 0.0.0.0:5000
+    ports:
+      - "8000:5000"
+    depends_on:
+      ps_postgres:
+        condition: service_healthy
+      pattern-service-worker:
+        condition: service_started
+    healthcheck:
+      test: [ 'CMD', 'curl', '-q', 'http://localhost:8000/ping/' ]
+      interval: 30s
+      timeout: 5s
+      retries: 10
+    networks:
+      - dev
+      - default
+
+volumes:
+  postgres_data: {}
+
+networks:
+  dev:
+    name: dev
