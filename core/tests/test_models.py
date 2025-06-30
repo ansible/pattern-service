@@ -16,7 +16,7 @@ class ModelTestCase(TestCase):
             collection_version="1.0.0",
             collection_version_uri="https://example.com/mynamespace/mycollection/",
             pattern_name="example_pattern",
-            pattern_definition={"key": "value"}
+            pattern_definition={"key": "value"},
         )
         self.label = ControllerLabel.objects.create(label_id=5)
 
@@ -73,10 +73,7 @@ class ModelTestCase(TestCase):
         self.assertTrue(automation.primary)
 
     def test_task_status_choices_valid(self):
-        task = Task.objects.create(
-            status="Running",
-            details={"info": "in progress"}
-        )
+        task = Task.objects.create(status="Running", details={"info": "in progress"})
         self.assertEqual(task.status, "Running")
         self.assertEqual(task.details["info"], "in progress")
 
