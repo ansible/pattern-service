@@ -15,7 +15,7 @@ pre-commit-user
 *.py[c,o]
 /.eggs
 .python-version
-
+/.install
 
 # Testing
 .cache

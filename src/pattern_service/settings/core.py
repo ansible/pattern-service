@@ -21,7 +21,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-_f^+pc=x%dd&p8ht4qv7rqr8&a%@j#lda6v!x9353m+)fm8&gk"
+SECRET_KEY = (
+    "django-insecure-_f^+pc=x%dd&p8ht4qv7rqr8&a%@j#lda6v!x9353m+)fm8&gk"
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -39,8 +41,13 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
-    "core",
-    "rest_framework",
+    "pattern_service.core",
+    "ansible_base.rest_filters",
+    "ansible_base.jwt_consumer",
+    "ansible_base.resource_registry",
+    "ansible_base.rbac",
+    "ansible_base.feature_flags",
+    "ansible_base.activitystream",
 ]
 
 MIDDLEWARE = [
@@ -124,3 +131,6 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+ANSIBLE_BASE_TEAM_MODEL = "core.Team"
+ANSIBLE_BASE_ORGANIZATION_MODEL = "core.Organization"
+ANSIBLE_BASE_RBAC_MODEL_REGISTRY: dict = {}
