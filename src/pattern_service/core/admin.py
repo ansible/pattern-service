@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from core import models
+from pattern_service.core import models
 
 admin.site.register(models.Pattern)
 admin.site.register(models.ControllerLabel)

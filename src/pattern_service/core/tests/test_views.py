@@ -7,6 +7,7 @@ from core.models import ControllerLabel
 from core.models import Pattern
 from core.models import PatternInstance
 from core.models import Task
+from pattern_service.core.models import Task
 
 
 class SharedDataMixin:
@@ -39,9 +40,15 @@ class SharedDataMixin:
             pattern_instance=cls.pattern_instance,
         )
 
-        cls.task1 = Task.objects.create(status="Running", details={"progress": "50%"})
-        cls.task2 = Task.objects.create(status="Completed", details={"result": "success"})
-        cls.task3 = Task.objects.create(status="Failed", details={"error": "timeout"})
+        cls.task1 = Task.objects.create(
+            status="Running", details={"progress": "50%"}
+        )
+        cls.task2 = Task.objects.create(
+            status="Completed", details={"result": "success"}
+        )
+        cls.task3 = Task.objects.create(
+            status="Failed", details={"error": "timeout"}
+        )
 
 
 class TaskViewSetTest(SharedDataMixin, APITestCase):
@@ -55,21 +62,25 @@ class TaskViewSetTest(SharedDataMixin, APITestCase):
         url = reverse("task-detail", args=[self.task1.pk])
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn('id', response.data)
-        self.assertIn('status', response.data)
-        self.assertIn('details', response.data)
+        self.assertIn("id", response.data)
+        self.assertIn("status", response.data)
+        self.assertIn("details", response.data)
 
     def test_task_list_view_returns_all_tasks(self):
         url = reverse("task-list")
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # Verify we get all created tasks
-        task_ids = [task['id'] for task in response.data]
+        task_ids = [task["id"] for task in response.data]
         expected_ids = [self.task1.id, self.task2.id, self.task3.id]
         self.assertEqual(sorted(task_ids), sorted(expected_ids))
 
     def test_task_detail_view_for_different_statuses(self):
-        tasks_to_test = [(self.task1, "Running"), (self.task2, "Completed"), (self.task3, "Failed")]
+        tasks_to_test = [
+            (self.task1, "Running"),
+            (self.task2, "Completed"),
+            (self.task3, "Failed"),
+        ]
 
         for task, expected_status in tasks_to_test:
             with self.subTest(status=expected_status):

@@ -1,19 +1,38 @@
-.PHONY: build build-multi run test clean install-deps lint push-quay login-quay push-quay-multi
+.PHONY: build clean push compose-up compose-down compose-clean
 
 # Image name and tag
 CONTAINER_RUNTIME ?= podman
 IMAGE_NAME ?= ansible-pattern-service
 IMAGE_TAG ?= latest
+COMPOSE_UP_OPTS ?=
+COMPOSE_OPTS ?=
+
+
+## docker compose targets
+compose-build:
+	$(CONTAINER_RUNTIME) compose -f tools/docker/docker-compose.yaml $(COMPOSE_OPTS) build
+
+compose-up:
+	$(CONTAINER_RUNTIME) compose -f tools/docker/docker-compose.yaml $(COMPOSE_OPTS) up $(COMPOSE_UP_OPTS) --remove-orphans
+
+compose-down:
+	$(CONTAINER_RUNTIME) compose -f tools/docker/docker-compose.yaml $(COMPOSE_OPTS) down --remove-orphans
+
+compose-clean:
+	$(CONTAINER_RUNTIME) compose -f tools/docker/docker-compose.yaml rm -sf
+	docker rmi --force localhost/ansible-pattern-service-api localhost/ansible-pattern-service-worker
+
+compose-restart: compose-down compose-clean compose-up
+
 
 # Build the Docker image
+build_amd64:
+	@echo "Building container image..."
+	$(CONTAINER_RUNTIME) build -t $(IMAGE_NAME):$(IMAGE_TAG) --target aap-dev-image -f tools/docker/Dockerfile --arch amd64 .
+
 build:
 	@echo "Building container image..."
-	$(CONTAINER_RUNTIME) build -t $(IMAGE_NAME):$(IMAGE_TAG) -f Dockerfile.dev --arch amd64 .
-
-ensure-namespace:
-ifndef QUAY_NAMESPACE
-$(error QUAY_NAMESPACE is required to push quay.io)
-endif
+	$(CONTAINER_RUNTIME) build -t $(IMAGE_NAME):$(IMAGE_TAG) --target aap-dev-image -f tools/docker/Dockerfile .
 
 # Clean up
 clean:
@@ -25,3 +44,9 @@ push: ensure-namespace build
 	@echo "Tagging and pushing to registry..."
 	$(CONTAINER_RUNTIME) tag $(IMAGE_NAME):$(IMAGE_TAG) quay.io/$(QUAY_NAMESPACE)/$(IMAGE_NAME):$(IMAGE_TAG)
 	$(CONTAINER_RUNTIME) push quay.io/$(QUAY_NAMESPACE)/$(IMAGE_NAME):$(IMAGE_TAG)
+
+ensure-namespace:
+ifndef QUAY_NAMESPACE
+	$(error QUAY_NAMESPACE is required to push quay.io)
+endif
+

@@ -10,6 +10,8 @@ cffi==1.17.1
     # via cryptography
 cryptography==45.0.4
     # via django-ansible-base
+dispatcherd==2025.5.21
+    # via -r requirements/requirements.in
 django==4.2.23
     # via
     #   django-ansible-base
@@ -27,6 +29,8 @@ inflection==0.5.1
     # via django-ansible-base
 pycparser==2.22
     # via cffi
+pyyaml==6.0.2
+    # via dispatcherd
 sqlparse==0.5.3
     # via
     #   django

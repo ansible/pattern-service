@@ -1,0 +1,42 @@
+---
+version: 2
+service:
+  pool_kwargs:
+    min_workers: 2  # subprocesses
+    max_workers: 12
+    scaledown_wait: 15  # seconds
+  main_kwargs:
+    node_id: pattern-service-a
+  process_manager_cls: "ForkServerManager"
+  process_manager_kwargs:
+    preload_modules: ["pattern_service.core.tasks.hazmat"]
+worker:
+  worker_kwargs:
+    idle_timeout: 3
+brokers:
+  pg_notify:
+    config:
+      conninfo: dbname=pattern_db user=pattern password=pattern123 host=ps_postgres port=5432 application_name=dispatcher_pattern_service
+    sync_connection_factory: dispatcherd.brokers.pg_notify.connection_saver
+    # List of channels to listen on
+    channels:
+    - ps_resource_state
+    default_publish_channel: ps_resource_state
+    max_connection_idle_seconds: 5
+    max_self_check_message_age_seconds: 2
+  socket:
+    socket_path: pattern_service_dispatcher.sock
+producers:
+  ScheduledProducer:
+    task_schedule:
+      'lambda: __import__("time").sleep(1)':
+        schedule: 3
+      'lambda: __import__("time").sleep(2)':
+        schedule: 3
+  OnStartProducer:
+    task_list:
+      'lambda: print("This task runs on startup")': {}
+  ControlProducer:
+publish:
+  default_control_broker: socket
+  default_broker: pg_notify
