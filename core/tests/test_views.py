@@ -1,12 +1,12 @@
 from django.urls import reverse
-from rest_framework.test import APITestCase
 from rest_framework import status
+from rest_framework.test import APITestCase
 
+from core.models import Automation
+from core.models import ControllerLabel
 from core.models import Pattern
 from core.models import PatternInstance
 from core.models import Task
-from core.models import Automation
-from core.models import ControllerLabel
 
 
 class SharedDataMixin:
