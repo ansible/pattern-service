@@ -38,20 +38,13 @@ class TaskViewSetTest(SharedDataMixin, APITestCase):
         self.assertEqual(sorted(task_ids), sorted(expected_ids))
 
     def test_task_detail_view_for_different_statuses(self):
-        # Test task with Running status
-        url = reverse("task-detail", args=[self.task1.pk])
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        tasks_to_test = [(self.task1, "Running"), (self.task2, "Completed"), (self.task3, "Failed")]
 
-        # Test task with Completed status
-        url = reverse("task-detail", args=[self.task2.pk])
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-        # Test task with Failed status
-        url = reverse("task-detail", args=[self.task3.pk])
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        for task, expected_status in tasks_to_test:
+            with self.subTest(status=expected_status):
+                url = reverse("task-detail", args=[task.pk])
+                response = self.client.get(url)
+                self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_task_detail_view_nonexistent_task(self):
         url = reverse("task-detail", args=[99999])
