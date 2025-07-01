@@ -120,7 +120,6 @@ class PatternViewSetTest(SharedDataMixin, APITestCase):
         # Task id returned directly
         task_id = response.data.get("task_id")
         self.assertIsInstance(task_id, int)
-
         # Task exists
         task = Task.objects.get(id=task_id)
         self.assertEqual(task.status, "Initiated")
@@ -154,13 +153,10 @@ class PatternInstanceViewSetTest(SharedDataMixin, APITestCase):
 
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
-
         instance = PatternInstance.objects.get(organization_id=2)
         self.assertIsNotNone(instance)
-
         task_id = response.data.get("task_id")
         self.assertIsInstance(task_id, int)
-
         task = Task.objects.get(id=task_id)
         self.assertEqual(task.status, "Initiated")
         self.assertEqual(task.details.get("model"), "PatternInstance")
