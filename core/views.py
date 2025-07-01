@@ -1,4 +1,6 @@
 from ansible_base.lib.utils.views.ansible_base import AnsibleBaseView
+from asgiref.sync import async_to_sync
+from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
@@ -14,6 +16,8 @@ from .serializers import ControllerLabelSerializer
 from .serializers import PatternInstanceSerializer
 from .serializers import PatternSerializer
 from .serializers import TaskSerializer
+from .tasks import run_pattern_instance_task
+from .tasks import run_pattern_task
 
 
 class CoreViewSet(AnsibleBaseView):
@@ -24,6 +28,25 @@ class PatternViewSet(CoreViewSet, ModelViewSet):
     queryset = Pattern.objects.all()
     serializer_class = PatternSerializer
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        pattern = serializer.save()
+
+        task = Task.objects.create(status="Initiated", details={"model": "Pattern", "id": pattern.id})
+
+        async_to_sync(run_pattern_task)(pattern.id, task.id)
+
+        headers = self.get_success_headers(serializer.data)
+        return Response(
+            {
+                "task_id": task.id,
+                "message": "Pattern creation initiated. Check task status for progress.",
+            },
+            status=status.HTTP_202_ACCEPTED,
+            headers=headers,
+        )
+
 
 class ControllerLabelViewSet(CoreViewSet, ModelViewSet):
     queryset = ControllerLabel.objects.all()
@@ -33,6 +56,29 @@ class ControllerLabelViewSet(CoreViewSet, ModelViewSet):
 class PatternInstanceViewSet(CoreViewSet, ModelViewSet):
     queryset = PatternInstance.objects.all()
     serializer_class = PatternInstanceSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        # Save initial PatternInstance
+        instance = serializer.save()
+
+        # Create a Task entry to track this processing
+        task = Task.objects.create(status="Initiated", details={"model": "PatternInstance", "id": instance.id})
+
+        # Schedule async background task to enrich this instance
+        async_to_sync(run_pattern_instance_task)(instance.id, task.id)
+
+        headers = self.get_success_headers(serializer.data)
+        return Response(
+            {
+                "task_id": task.id,
+                "message": "PatternInstance creation initiated. Check task status for progress.",
+            },
+            status=status.HTTP_202_ACCEPTED,
+            headers=headers,
+        )
 
 
 class AutomationViewSet(CoreViewSet, ModelViewSet):
