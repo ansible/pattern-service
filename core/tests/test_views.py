@@ -1,5 +1,3 @@
-from unittest.mock import patch
-
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -9,7 +7,6 @@ from core.models import ControllerLabel
 from core.models import Pattern
 from core.models import PatternInstance
 from core.models import Task
-from core.tasks import run_pattern_task
 
 
 class SharedDataMixin:
@@ -120,6 +117,7 @@ class PatternViewSetTest(SharedDataMixin, APITestCase):
         # Task id returned directly
         task_id = response.data.get("task_id")
         self.assertIsInstance(task_id, int)
+
         # Task exists
         task = Task.objects.get(id=task_id)
         self.assertEqual(task.status, "Initiated")
@@ -155,8 +153,10 @@ class PatternInstanceViewSetTest(SharedDataMixin, APITestCase):
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
         instance = PatternInstance.objects.get(organization_id=2)
         self.assertIsNotNone(instance)
+
         task_id = response.data.get("task_id")
         self.assertIsInstance(task_id, int)
+
         task = Task.objects.get(id=task_id)
         self.assertEqual(task.status, "Initiated")
         self.assertEqual(task.details.get("model"), "PatternInstance")
