@@ -27,6 +27,7 @@ class ModelTestCase(TestCase):
         with self.assertRaises(ValidationError):
             task.full_clean()  # triggers choice validation
 
+
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "status, details",
