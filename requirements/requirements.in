@@ -1,1 +1,1 @@
-django-ansible-base==2025.5.8
+django-ansible-base[api-documentation]==2025.5.8

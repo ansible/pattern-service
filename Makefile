@@ -1,4 +1,5 @@
-.PHONY: build build-multi run test clean install-deps lint push-quay login-quay push-quay-multi
+.PHONY: build build-multi run test clean install-deps generate-api-spec lint push-quay login-quay push-quay-multi requirements
+
 
 # Image name and tag
 CONTAINER_RUNTIME ?= podman
@@ -25,3 +26,13 @@ push: ensure-namespace build
 	@echo "Tagging and pushing to registry..."
 	$(CONTAINER_RUNTIME) tag $(IMAGE_NAME):$(IMAGE_TAG) quay.io/$(QUAY_NAMESPACE)/$(IMAGE_NAME):$(IMAGE_TAG)
 	$(CONTAINER_RUNTIME) push quay.io/$(QUAY_NAMESPACE)/$(IMAGE_NAME):$(IMAGE_TAG)
+
+requirements:
+	pip-compile -o requirements/requirements.txt requirements/requirements.in
+	pip-compile -o requirements/requirements-dev.txt requirements/requirements.in requirements/requirements-dev.in
+
+generate-api-spec:
+	python manage.py spectacular --validate --fail-on-warn --format openapi-json --file specifications/openapi.json
+
+test:
+	pytest -vv

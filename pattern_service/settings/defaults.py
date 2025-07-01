@@ -39,8 +39,8 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
+    "ansible_base.api_documentation",
     "core",
-    "rest_framework",
 ]
 
 MIDDLEWARE = [
@@ -124,3 +124,52 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+LOG_LEVEL = "DEBUG" if DEBUG else "INFO"
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "simple": {
+            "format": "{levelname} {name} {lineno} {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "level": LOG_LEVEL,
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
+        },
+    },
+    "filters": {"require_debug_false": {"()": "django.utils.log.RequireDebugFalse"}},
+    "loggers": {
+        "ansible_base": {
+            "handlers": ["console"],
+            "level": LOG_LEVEL,
+        },
+        "core": {
+            "handlers": ["console"],
+            "level": LOG_LEVEL,
+        },
+        "django": {
+            "handlers": ["console"],
+            "level": "INFO",
+        },
+        "django.request": {
+            "handlers": ["console"],
+            "level": LOG_LEVEL,
+        },
+        "drf_spectacular": {
+            "handlers": ["console"],
+            "level": LOG_LEVEL,
+        },
+    },
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Pattern Service API",
+    "DESCRIPTION": "Pattern Service API Specification",
+    "VERSION": "v1",
+    "SCHEMA_PATH_PREFIX": "/api/pattern-service/v1/",
+}
