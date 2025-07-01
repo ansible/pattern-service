@@ -27,7 +27,6 @@ inflection==0.5.1
     # via django-ansible-base
 pycparser==2.22
     # via cffi
-pytest==7.4.2
 sqlparse==0.5.3
     # via
     #   django

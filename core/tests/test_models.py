@@ -1,4 +1,3 @@
-import pytest
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
@@ -23,17 +22,12 @@ class ModelTestCase(TestCase):
         with self.assertRaises(ValidationError):
             task.full_clean()  # triggers choice validation
 
+    def test_task_status_choices_valid_running_with_info(self):
+        task = Task.objects.create(status="Running", details={"info": "in progress"})
+        self.assertEqual(task.status, "Running")
+        self.assertEqual(task.details["info"], "in progress")
 
-@pytest.mark.django_db
-@pytest.mark.parametrize(
-    "status, details",
-    [
-        ("Running", {"info": "in progress"}),
-        ("Running", {}),
-    ],
-)
-def test_task_status_choices_valid(status, details):
-    task = Task.objects.create(status=status, details=details)
-    assert task.status == status
-    if "info" in details:
-        assert task.details["info"] == "in progress"
+    def test_task_status_choices_valid_running_empty_details(self):
+        task = Task.objects.create(status="Running", details={})
+        self.assertEqual(task.status, "Running")
+        self.assertEqual(task.details, {})
