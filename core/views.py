@@ -46,7 +46,6 @@ class PatternViewSet(CoreViewSet, ModelViewSet):
                 ),
             },
             status=status.HTTP_202_ACCEPTED,
-            headers=headers,
         )
 
 
