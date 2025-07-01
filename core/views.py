@@ -40,7 +40,7 @@ class AutomationViewSet(CoreViewSet, ModelViewSet):
     serializer_class = AutomationSerializer
 
 
-class TaskViewSet(ReadOnlyModelViewSet):
+class TaskViewSet(CoreViewSet, ReadOnlyModelViewSet):
     queryset = Task.objects.all()
     serializer_class = TaskSerializer
 
