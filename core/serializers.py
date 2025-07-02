@@ -6,6 +6,7 @@ from .models import Automation
 from .models import ControllerLabel
 from .models import Pattern
 from .models import PatternInstance
+from .models import Task
 
 
 class PatternSerializer(CommonModelSerializer):
@@ -53,4 +54,13 @@ class AutomationSerializer(CommonModelSerializer):
             'automation_id',
             'primary',
             'pattern_instance',
+        ]
+
+
+class TaskSerializer(CommonModelSerializer):
+    class Meta(CommonModelSerializer.Meta):
+        model = Task
+        fields = CommonModelSerializer.Meta.fields + [
+            'status',
+            'details',
         ]
