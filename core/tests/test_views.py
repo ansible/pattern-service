@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -7,6 +9,7 @@ from core.models import ControllerLabel
 from core.models import Pattern
 from core.models import PatternInstance
 from core.models import Task
+from core.tasks import run_pattern_task
 
 
 class SharedDataMixin:
@@ -294,7 +297,12 @@ class TaskViewSetTest(SharedDataMixin, APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["collection_name"], "mynamespace.mycollection")
 
-    def test_pattern_create_view(self):
+    @patch("core.views.async_to_sync")
+    def test_pattern_create_view(self, mock_async_to_sync):
+        """
+        Test POST /patterns/ creates Pattern and Task,
+        calls run_pattern_task and returns 202 with task_id.
+        """
         url = reverse("pattern-list")
         data = {
             "collection_name": "new.namespace.collection",
@@ -310,16 +318,17 @@ class TaskViewSetTest(SharedDataMixin, APITestCase):
         pattern = Pattern.objects.get(pattern_name="new_pattern")
         self.assertIsNotNone(pattern)
 
-        # Task id returned directly
-        task_id = response.data.get("task_id")
-        self.assertIsInstance(task_id, int)
-
-        # Task exists
+        # Task created pointing to pattern id
+        task_id = response.data["task_id"]
         task = Task.objects.get(id=task_id)
         self.assertEqual(task.status, "Initiated")
-        self.assertEqual(task.details.get("model"), "Pattern")
-        self.assertEqual(task.details.get("id"), pattern.id)
 
+        mock_async_to_sync.assert_called_once()
+        args, kwargs = mock_async_to_sync.call_args
+        # The first argument should be run_pattern_task
+        self.assertEqual(args[0], run_pattern_task)
+        self.assertIn("task_id", response.data)
+        self.assertIn("message", response.data)
 
 class PatternInstanceViewSetTest(SharedDataMixin, APITestCase):
     def test_pattern_instance_list_view(self):
