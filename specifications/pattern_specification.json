@@ -3,6 +3,7 @@
     "$id": "https://github.com/ansible/pattern-service/blob/main/specifications/pattern_specification.json",
     "title": "Ansible Pattern Schema",
     "description": "A schema for validating Ansible pattern definitions",
+    "examples": [],
     "type": "object",
     "required": [
         "schema_version",
@@ -143,7 +144,7 @@
                                 "description": "Name of the playbook file included in the pattern `automations` directory.",
                                 "type": "string"
                             },
-                            "primary"{
+                            "primary": {
                                 "description": "Whether the playbook is the primary playbook for this job template. If there are multiple job templates included, one should be labeled as the primary job template.",
                                 "type": "boolean"
                             },
