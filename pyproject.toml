@@ -1,30 +1,142 @@
+[build-system]
+requires = ["poetry-core>=2.0,<3.0"]
+build-backend = "poetry.core.masonry.api"
+
 [project]
-name = "pattern_service"
+name = "aap-pattern-service"
 version = "0.1.0"
-description = "Pattern Service Django project"
+description = ""
 readme = "README.md"
-requires-python = ">=3.10"
-dependencies = [
-    "django-ansible-base==2025.5.8"
+authors = [
+    { name = "Ansible, Inc.", email = "Red Hat, Inc. <info@ansible.com>" },
 ]
+requires-python = ">=3.11,<3.13"
+
+[project.scripts]
+aap-pattern-service-manage = 'pattern_service.manage:main'
+
+
+# -------------------------------------
+# Poetry: Metadata
+# -------------------------------------
+[tool.poetry]
+requires-poetry = ">=2.0,<3.0"
+packages = [{ include = "pattern_service", from = "src" }]
+
+
+# -------------------------------------
+# Poetry: Dependencies
+# -------------------------------------
+[tool.poetry.extras]
+all = ["psycopg"]
+dev = ["psycopg-binary"]
+
+[tool.poetry.dependencies]
+python = ">=3.11,<3.13"
+django = ">=4.2,<4.3"
+djangorestframework = "3.15.*"
+drf-spectacular = ">=0.26.5,<0.27"
+channels = { version = "4.0.*", extras = ["daphne"] }
+psycopg-binary = { version = "*", optional = true }
+django-filter = ">23.2,<24"
+pydantic = ">=1.8.1,<1.11"
+cryptography = ">=42,<43"
+django-ansible-base = { git = "https://github.com/ansible/django-ansible-base.git", tag = "2025.5.8", extras = [
+    "channel-auth",
+    "rbac",
+    "resource-registry",
+    "jwt-consumer",
+    "rest-filters",
+    "feature-flags",
+] }
+jinja2 = ">=3.1.3,<3.2"
+django-split-settings = "^1.2.0"
+pexpect = "^4.9.0"
+python-gnupg = "^0.5.2"
+autobahn = { git = "https://github.com/crossbario/autobahn-python.git", rev = "v24.4.2" }
+psycopg = "^3.1.17"
+xxhash = "3.4.*"
+pyjwt = { version = "2.7.*", extras = ["crypto"] }
+ecdsa = "0.18.*"
+validators = "^0.34.0"
+django-flags = "^5.0.13"
+insights-analytics-collector = "^0.3.2"
+distro = "^1.9.0"
+dispatcherd = { version = "v2025.05.19", extras = ["pg_notify"] }
+
+
+[tool.poetry.group.test.dependencies]
+pytest = "*"
+pytest-env = "*"
+pytest-django = "*"
+pytest-asyncio = "*"
+requests = { version = "*", python = "<4.0" }
+pytest-cov = "^4.1.0"
+pytest-lazy-fixture = "^0.6.3"
+requests-mock = "*"
+httpie = "^3.2.3"
+
+[tool.poetry.group.lint.dependencies]
+flake8 = "*"
+isort = "*"
+black = "*"
+flake8-broken-line = { version = "*", python = "<4.0" }
+flake8-string-format = "*"
+# This is an experimental linter.
+ruff = "*"
+# The rull claims that the flake8 plugins listed below are re-implemented,
+#   These plugins will remain included until it's verified.
+pep8-naming = "*"
+flake8-bugbear = "*"
+flake8-comprehensions = "*"
+flake8-debugger = "*"
+flake8-docstrings = "*"
+flake8-eradicate = { version = "*", python = "<4.0" }
+flake8-print = "*"
+
+[tool.poetry.group.dev.dependencies]
+ipython = "*"
+
+# -------------------------------------
+# Tools
+# -------------------------------------
 
 [tool.black]
-line-length = 160
-fast = true
-skip-string-normalization = true
+line-length = 79
+target-version = ["py39", "py310"]
 
 [tool.isort]
 profile = "black"
-force_single_line = true
-line_length = 120
+combine_as_imports = true
+line_length = 79
 
-[build-system]
-requires = ["setuptools>=61", "wheel"]
-build-backend = "setuptools.build_meta"
+[tool.ruff]
+line-length = 79
 
-[tool.setuptools]
-packages = ["pattern_service"]
+[tool.ruff.lint]
+select = [
+    "E",
+    "F",
+    "D",   # flake8-docstrings
+    "TID", # flake8-tidy-imports
+]
+extend-ignore = [
+    "D1", #  Missing docstrings errors
+]
 
-[[tool.mypy.overrides]]
-module = ["ansible_base.*", "rest_framework.*"]
-ignore_missing_imports = true
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+"src/pattern_service/core/migrations/*" = ["E501"]
+"tests/**/*.py" = [
+    "S101",   # Asserts allowed in tests
+    "ARG",    # Fixtures are not always used explicitly
+    "SLF001", # Call private methods in tests
+    "D",      # Docstrings are not required in tests
+]
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "parents"
+
+[tool.ruff.lint.pydocstyle]
+convention = "pep257"
