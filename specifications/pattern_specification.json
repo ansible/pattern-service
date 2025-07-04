@@ -143,7 +143,7 @@
                                 "description": "Name of the playbook file included in the pattern `automations` directory.",
                                 "type": "string"
                             },
-                            "primary"{
+                            "primary": {
                                 "description": "Whether the playbook is the primary playbook for this job template. If there are multiple job templates included, one should be labeled as the primary job template.",
                                 "type": "boolean"
                             },
