@@ -1,7 +1,12 @@
+import asyncio
+import io
 import json
 import os
+import shutil
 import tarfile
 import tempfile
+import logging
+import urllib.parse
 
 import aiohttp
 from asgiref.sync import sync_to_async
@@ -9,42 +14,48 @@ from asgiref.sync import sync_to_async
 from .models import Pattern
 from .models import Task
 
+logger = logging.getLogger(__name__)
+
 
 async def update_task_status(task: Task, status_: str, details: dict):
     task.status = status_
     task.details = details
-    await sync_to_async(task.save, thread_sensitive=True)()
+    await task.asave()
 
 
-async def download_and_extract_tarball(url: str) -> dict:
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url) as resp:
-            if resp.status != 200:
-                raise Exception(f"Failed to download tarball: HTTP {resp.status}")
+async def download_collection(url: str, collection: str, version: str) -> str:
+    """
+    Asynchronously downloads and extracts a collection to a path.
+    Returns the path where files were extracted.
+    """
+    temp_base_dir = tempfile.mkdtemp()
 
-            with tempfile.NamedTemporaryFile(delete=False) as tmp:
-                tmp.write(await resp.read())
-                tmp_path = tmp.name
+    collection_path = os.path.join(temp_base_dir, f"{collection}-{version}")
+    os.makedirs(collection_path, exist_ok=True)
 
-    extract_dir = tempfile.mkdtemp()
-    with tarfile.open(tmp_path, 'r:*') as tar:
-        tar.extractall(path=extract_dir)
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as resp:
+                resp.raise_for_status()
+                in_memory_tar = io.BytesIO(await resp.read())
 
-    # Look for a .pattern.json or similar file
-    for root, _, files in os.walk(extract_dir):
-        for fname in files:
-            if fname.endswith(".json"):
-                with open(os.path.join(root, fname)) as f:
-                    return json.load(f)
+        with tarfile.open(fileobj=in_memory_tar, mode="r|*") as tar:
+            tar.extractall(path=collection_path, filter="data")
 
-    raise Exception("Pattern definition JSON file not found in tarball")
+        logger.info(f"Collection extracted to {collection_path}")
+        return collection_path  # Return the path, not its contents
+
+    except Exception:
+        # If anything fails, clean up the directory and re-raise the error
+        shutil.rmtree(temp_base_dir)
+        raise
 
 
 async def run_pattern_task(pattern_id: int, task_id: int):
-    task = await sync_to_async(Task.objects.get, thread_sensitive=True)(id=task_id)
-
+    task = await Task.objects.aget(id=task_id)
+    collection_path = None
     try:
-        pattern = await sync_to_async(Pattern.objects.get, thread_sensitive=True)(id=pattern_id)
+        pattern = await Pattern.objects.aget(id=pattern_id)
         await update_task_status(task, "Running", {"info": "Processing pattern"})
 
         # Skip download if URI is missing
@@ -53,11 +64,35 @@ async def run_pattern_task(pattern_id: int, task_id: int):
             return
 
         await update_task_status(task, "Running", {"info": "Downloading collection tarball"})
-        definition = await download_and_extract_tarball(pattern.collection_version_uri)
+
+        # Get all necessary names from the pattern object
+        collection_name = pattern.collection.replace(".", "-")
+        collection_version = pattern.collection_version
+        pattern_name = pattern.pattern_name
+
+        collection_path = await download_collection(
+            pattern.collection_version_uri,
+            collection_name,
+            collection_version
+        )
+        path_to_definition = os.path.join(
+            collection_path, "extensions", "patterns", pattern_name, "meta", "pattern.json"
+        )
+        with open(path_to_definition, "r") as file:
+            definition = json.load(file)
+
         pattern.pattern_definition = definition
-
-        await sync_to_async(pattern.save, thread_sensitive=True)()
-
+        await pattern.asave()
         await update_task_status(task, "Completed", {"info": "Pattern processed successfully"})
+
+    except FileNotFoundError:
+        logger.error(f"Could not find pattern definition for task {task_id}")
+        await update_task_status(task, "Failed", {"error": "Pattern definition file not found in collection."})
+
     except Exception as e:
+        logger.error(f"Task {task_id} failed: {e}")
         await update_task_status(task, "Failed", {"error": str(e)})
+
+    finally:
+        if collection_path and os.path.exists(collection_path):
+            shutil.rmtree(os.path.dirname(collection_path))
