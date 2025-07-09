@@ -56,11 +56,13 @@ USER "$USER_ID"
 
 FROM base AS dispatcher-image
 
-COPY dispatcher_dev.yml /app/
+ARG DISPATCHER_CONFIG=${DISPATCHER_CONFIG:-dispatcher_dev.yml}
 
-RUN sed  's/\(node_id: \)pattern-service-a/\1pattern-service-worker/' /app/dispatcher_dev.yml > /app/dispatcher-worker.yml
+COPY "${DISPATCHER_CONFIG}" /app/dispatcher.yml
 
-RUN sed  's/\(node_id: \)pattern-service-a/\1pattern-service-api/' /app/dispatcher_dev.yml > /app/dispatcher-api.yml
+RUN sed  's/\(node_id: \)pattern-service-a/\1pattern-service-worker/' /app/dispatcher.yml > /app/dispatcher-worker.yml
+
+RUN sed  's/\(node_id: \)pattern-service-a/\1pattern-service-api/' /app/dispatcher.yml > /app/dispatcher-api.yml
 
 FROM base AS aap-dev-image
 

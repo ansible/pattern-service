@@ -33,6 +33,8 @@ services:
       context: ../../
       dockerfile: tools/docker/Dockerfile
       target: dispatcher-image
+      args:
+        - DISPATCHER_CONFIG=dispatcher_dev_mac.yml
     command:
       - /bin/bash
       - -c
@@ -51,6 +53,8 @@ services:
       context: ../../
       dockerfile: tools/docker/Dockerfile
       target: dispatcher-image
+      args:
+        - DISPATCHER_CONFIG=dispatcher_dev_mac.yml
     command:
       - /bin/bash
       - -c

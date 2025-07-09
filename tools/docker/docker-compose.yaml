@@ -1,23 +1,23 @@
 x-environment: &common-env
-  PATTERN_SERVICE_DB_HOST: ps_postgres
+  PATTERN_SERVICE_DB_HOST: postgres
   PATTERN_SERVICE_DB_PORT: 5432
-  PATTERN_SERVICE_DB_NAME: pattern
+  PATTERN_SERVICE_DB_NAME: pattern_db
   PATTERN_SERVICE_DB_USER: pattern
   PATTERN_SERVICE_DB_PASSWORD: pattern123
   PATTERN_SERVICE_FEATURE_DISPATCHERD: "true"
 services:
-  ps_postgres:
+  postgres:
     image: quay.io/sclorg/postgresql-15-c9s:latest
     environment:
       POSTGRESQL_USER: pattern
       POSTGRESQL_PASSWORD: pattern123
-      POSTGRESQL_DATABASE: pattern
+      POSTGRESQL_DATABASE: pattern_db
     ports:
       - '5432:5432'
     volumes:
       - 'postgres_data:/var/lib/pgsql/data'
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "postgres"]
+      test: ["CMD", "pg_isready", "-U", "pattern", "-d", "pattern_db"]
       interval: 5s
       timeout: 5s
       retries: 3
@@ -39,7 +39,7 @@ services:
       - -c
       - aap-pattern-service-manage worker
     depends_on:
-      ps_postgres:
+      postgres:
         condition: service_healthy
     restart: always
     networks:
@@ -64,7 +64,7 @@ services:
     ports:
       - "8000:5000"
     depends_on:
-      ps_postgres:
+      postgres:
         condition: service_healthy
       pattern-service-worker:
         condition: service_started

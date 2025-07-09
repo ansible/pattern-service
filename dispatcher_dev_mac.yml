@@ -16,7 +16,7 @@ worker:
 brokers:
   pg_notify:
     config:
-      conninfo: dbname=pattern_db user=pattern password=pattern123 host=postgres port=5432 application_name=dispatcher_pattern_service
+      conninfo: host=postgres port=5432 dbname=pattern user=postgres password=secret
     sync_connection_factory: dispatcherd.brokers.pg_notify.connection_saver
     # List of channels to listen on
     channels:
