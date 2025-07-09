@@ -40,7 +40,7 @@ class TaskTests(SharedDataMixin, TestCase):
 
     def test_run_pattern_task_with_uri(self):
 
-        async def mock_download_and_extract_tarball(url):
+        async def mock_download_collectionl(url, collection, version):
             raise Exception("Download failed")
 
         task = Task.objects.create(status="Initiated", details={"model": "Pattern", "id": self.pattern.id})
@@ -48,7 +48,7 @@ class TaskTests(SharedDataMixin, TestCase):
         async def _run_pattern_task():
             await run_pattern_task(self.pattern.id, task.id)
 
-        with patch("core.tasks.download_and_extract_tarball", new=mock_download_and_extract_tarball):
+        with patch("core.tasks.download_collection", new=mock_download_collectionl):
             async_to_sync(_run_pattern_task)()
 
         task.refresh_from_db()
