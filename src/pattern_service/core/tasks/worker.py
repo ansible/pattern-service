@@ -46,8 +46,7 @@ def _create_resource(resource_id):
     logger.info(
         "This is the place where the functional logic should take place."
     )
-    sleep_time = int(os.environ.get("PS_DEBUG_SLEEP_TIME", "15"))
-    logger.info(f"Sleeping for {sleep_time} second(s)")
+    sleep_time = 10
     time.sleep(sleep_time)
     resource.state = ResourceState.StateOptions.COMPLETED
     resource.save(update_fields=["state"])
