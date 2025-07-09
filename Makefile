@@ -21,8 +21,26 @@ compose-down:
 compose-clean:
 	$(CONTAINER_RUNTIME) compose -f tools/docker/docker-compose.yaml rm -sf
 	docker rmi --force localhost/ansible-pattern-service-api localhost/ansible-pattern-service-worker
+	docker volume rm -f postgres_data
 
 compose-restart: compose-down compose-clean compose-up
+
+## docker compose targets for macOS
+compose-mac-build:
+	$(CONTAINER_RUNTIME) compose -f tools/docker/docker-compose-mac.yaml $(COMPOSE_OPTS) build
+
+compose-mac-up:
+	$(CONTAINER_RUNTIME) compose -f tools/docker/docker-compose-mac.yaml $(COMPOSE_OPTS) up $(COMPOSE_UP_OPTS) --remove-orphans
+
+compose-mac-down:
+	$(CONTAINER_RUNTIME) compose -f tools/docker/docker-compose-mac.yaml $(COMPOSE_OPTS) down --remove-orphans
+
+compose-mac-clean:
+	$(CONTAINER_RUNTIME) compose -f tools/docker/docker-compose-mac.yaml rm -sf
+	docker rmi --force localhost/ansible-pattern-service-api localhost/ansible-pattern-service-worker
+	docker volume rm -f postgres_data
+
+compose-mac-restart: compose-mac-down compose-mac-clean compose-mac-up
 
 
 # Build the Docker image
