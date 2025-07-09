@@ -1,15 +1,14 @@
 import asyncio
 import io
 import json
+import logging
 import os
 import shutil
 import tarfile
 import tempfile
-import logging
 import urllib.parse
 
 import aiohttp
-from asgiref.sync import sync_to_async
 
 from .models import Pattern
 from .models import Task
@@ -44,7 +43,6 @@ async def download_collection(url: str, collection: str, version: str) -> str:
 
         logger.info(f"Collection extracted to {collection_path}")
         return collection_path  # Return the path, not its contents
-
     except Exception:
         # If anything fails, clean up the directory and re-raise the error
         shutil.rmtree(temp_base_dir)
@@ -54,6 +52,7 @@ async def download_collection(url: str, collection: str, version: str) -> str:
 async def run_pattern_task(pattern_id: int, task_id: int):
     task = await Task.objects.aget(id=task_id)
     collection_path = None
+
     try:
         pattern = await Pattern.objects.aget(id=pattern_id)
         await update_task_status(task, "Running", {"info": "Processing pattern"})
@@ -66,25 +65,18 @@ async def run_pattern_task(pattern_id: int, task_id: int):
         await update_task_status(task, "Running", {"info": "Downloading collection tarball"})
 
         # Get all necessary names from the pattern object
-        collection_name = pattern.collection.replace(".", "-")
+        collection_name = pattern.collection_name.replace(".", "-")
         collection_version = pattern.collection_version
         pattern_name = pattern.pattern_name
 
-        collection_path = await download_collection(
-            pattern.collection_version_uri,
-            collection_name,
-            collection_version
-        )
-        path_to_definition = os.path.join(
-            collection_path, "extensions", "patterns", pattern_name, "meta", "pattern.json"
-        )
+        collection_path = await download_collection(pattern.collection_version_uri, collection_name, collection_version)
+        path_to_definition = os.path.join(collection_path, "extensions", "patterns", pattern_name, "meta", "pattern.json")
         with open(path_to_definition, "r") as file:
             definition = json.load(file)
 
         pattern.pattern_definition = definition
         await pattern.asave()
         await update_task_status(task, "Completed", {"info": "Pattern processed successfully"})
-
     except FileNotFoundError:
         logger.error(f"Could not find pattern definition for task {task_id}")
         await update_task_status(task, "Failed", {"error": "Pattern definition file not found in collection."})
