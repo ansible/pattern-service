@@ -1,0 +1,78 @@
+---
+name: Docker
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+on: # yamllint disable-line rule:truthy
+  pull_request:
+    branches:
+      - main
+      - stable-*
+    tags:
+      - "*"
+
+jobs:
+  build:
+    name: Build docker image
+    runs-on: ubuntu-latest
+    env:
+      image_name: "ansible-pattern-service-test"
+      image_tag: "${{ github.sha }}"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Build the container image
+        run: make build
+        shell: bash
+        env:
+          CONTAINER_RUNTIME: docker
+          IMAGE_NAME: "${{ env.image_name }}"
+          IMAGE_TAG: "${{ env.image_tag }}"
+
+      - name: Run the container image
+        run: docker run -d -p "8000:5000" --name ansible-pattern-service-api "${IMAGE_NAME}:${IMAGE_TAG}"
+        shell: bash
+        env:
+          IMAGE_NAME: "${{ env.image_name }}"
+          IMAGE_TAG: "${{ env.image_tag }}"
+
+      - name: List running containers
+        run: docker ps -a
+        shell: bash
+
+      - name: Wait for the services to be up and running
+        run: sleep 15s
+        shell: bash
+
+      - name: Test the pattern service application
+        run: curl http://localhost:8000/ping/
+        shell: bash
+
+  compose:
+    name: Deploy the pattern service application with the dispatcher service
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: docker compose up
+        run: make compose-up
+        shell: bash
+        env:
+          CONTAINER_RUNTIME: docker
+          COMPOSE_UP_OPTS: "-d"
+
+      - name: Wait for the services to be up and running
+        run: sleep 15s
+        shell: bash
+
+      - name: List running services
+        run: docker ps -a
+        shell: bash
+
+      - name: Test the service are up and running
+        run: curl localhost:8000/api/pattern-service/v1/test/
+        shell: bash

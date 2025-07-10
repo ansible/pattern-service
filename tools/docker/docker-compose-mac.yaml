@@ -1,0 +1,79 @@
+x-environment: &common-env
+  PATTERN_SERVICE_DB_HOST: postgres
+  PATTERN_SERVICE_DB_PORT: 5432
+  PATTERN_SERVICE_DB_NAME: pattern
+  PATTERN_SERVICE_DB_USER: pattern
+  PATTERN_SERVICE_DB_PASSWORD: secret
+  PATTERN_SERVICE_FEATURE_DISPATCHERD: "true"
+services:
+  postgres:
+    image: quay.io/sclorg/postgresql-15-c9s:latest
+    environment:
+      POSTGRESQL_USER: pattern
+      POSTGRESQL_PASSWORD: secret
+      POSTGRESQL_ADMIN_PASSWORD: secret
+      POSTGRESQL_DATABASE: pattern
+    ports:
+      - '5432:5432'
+    volumes:
+      - 'postgres_data:/var/lib/pgsql/data'
+    healthcheck:
+      test: [ 'CMD', 'pg_isready', '-U', 'postgres' ]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+  pattern-service-worker:
+    image: localhost/ansible-pattern-service-worker
+    environment: 
+      << : *common-env
+      PATTERN_SERVICE_DISPATCHERD_CONFIG_FILE: /app/dispatcher-worker.yml
+    build:
+      context: ../../
+      dockerfile: tools/docker/Dockerfile
+      target: dispatcher-image
+      args:
+        - DISPATCHER_CONFIG=dispatcher_dev_mac.yml
+    command:
+      - /bin/bash
+      - -c
+      - aap-pattern-service-manage worker
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: always
+
+  pattern-service-api:
+    image: localhost/ansible-pattern-service-api
+    environment:
+      << : *common-env
+      PATTERN_SERVICE_DISPATCHERD_CONFIG_FILE: /app/dispatcher-api.yml
+    build:
+      context: ../../
+      dockerfile: tools/docker/Dockerfile
+      target: dispatcher-image
+      args:
+        - DISPATCHER_CONFIG=dispatcher_dev_mac.yml
+    command:
+      - /bin/bash
+      - -c
+      - >-
+        aap-pattern-service-manage makemigrations core
+        && aap-pattern-service-manage migrate core
+        && aap-pattern-service-manage runserver 0.0.0.0:5000
+    ports:
+      - "8000:5000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      pattern-service-worker:
+        condition: service_started
+    healthcheck:
+      test: [ 'CMD', 'curl', '-q', 'http://localhost:8000/ping/' ]
+      interval: 30s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres_data: {}
