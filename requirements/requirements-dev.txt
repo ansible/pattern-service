@@ -89,3 +89,5 @@ typing-extensions==4.13.2
     #   psycopg
 urllib3==2.5.0
     # via requests
+aiohttp
+aiohttp-utils

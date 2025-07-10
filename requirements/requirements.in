@@ -1,2 +1,4 @@
 django-ansible-base==2025.5.8
 dispatcherd
+aiohttp
+aiohttp-utils
