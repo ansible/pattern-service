@@ -1,9 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
-from core.models import ControllerLabel
-from core.models import Pattern
-from core.models import Task
+from pattern_service.core.models import ControllerLabel, Pattern, Task
 
 
 class ModelTestCase(TestCase):
@@ -23,7 +21,9 @@ class ModelTestCase(TestCase):
             task.full_clean()  # triggers choice validation
 
     def test_task_status_choices_valid_running_with_info(self):
-        task = Task.objects.create(status="Running", details={"info": "in progress"})
+        task = Task.objects.create(
+            status="Running", details={"info": "in progress"}
+        )
         self.assertEqual(task.status, "Running")
         self.assertEqual(task.details["info"], "in progress")
 

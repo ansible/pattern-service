@@ -1,19 +1,19 @@
-.PHONY: build build-multi run test clean install-deps lint push-quay login-quay push-quay-multi
+.PHONY: build clean push
 
 # Image name and tag
 CONTAINER_RUNTIME ?= podman
 IMAGE_NAME ?= ansible-pattern-service
 IMAGE_TAG ?= latest
 
+
 # Build the Docker image
+build_amd64:
+	@echo "Building container image..."
+	$(CONTAINER_RUNTIME) build -t $(IMAGE_NAME):$(IMAGE_TAG) -f tools/docker/Dockerfile.dev --arch amd64 .
+
 build:
 	@echo "Building container image..."
-	$(CONTAINER_RUNTIME) build -t $(IMAGE_NAME):$(IMAGE_TAG) -f Dockerfile.dev --arch amd64 .
-
-ensure-namespace:
-ifndef QUAY_NAMESPACE
-$(error QUAY_NAMESPACE is required to push quay.io)
-endif
+	$(CONTAINER_RUNTIME) build -t $(IMAGE_NAME):$(IMAGE_TAG) -f tools/docker/Dockerfile.dev .
 
 # Clean up
 clean:
@@ -25,3 +25,9 @@ push: ensure-namespace build
 	@echo "Tagging and pushing to registry..."
 	$(CONTAINER_RUNTIME) tag $(IMAGE_NAME):$(IMAGE_TAG) quay.io/$(QUAY_NAMESPACE)/$(IMAGE_NAME):$(IMAGE_TAG)
 	$(CONTAINER_RUNTIME) push quay.io/$(QUAY_NAMESPACE)/$(IMAGE_NAME):$(IMAGE_TAG)
+
+ensure-namespace:
+ifndef QUAY_NAMESPACE
+	$(error QUAY_NAMESPACE is required to push quay.io)
+endif
+
