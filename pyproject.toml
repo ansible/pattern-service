@@ -64,7 +64,7 @@ insights-analytics-collector = "^0.3.2"
 distro = "^1.9.0"
 dispatcherd = { version = "v2025.05.19", extras = ["pg_notify"] }
 aiohttp = "^3.12.13"
-aiohttp-utils= "^3.2.1"
+aiohttp-utils = "^3.2.1"
 
 [tool.poetry.group.test.dependencies]
 pytest = "*"
