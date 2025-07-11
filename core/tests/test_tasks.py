@@ -106,9 +106,6 @@ class TaskTests(SharedDataMixin, TestCase):
         # Mock the download_collection to return a fake path
         mock_download.return_value = self.create_temp_collection_dir()
 
-        # Fake pattern.json path
-        expected_json_path = os.path.join("/tmp/fake/collection-path", "extensions", "patterns", "example_pattern", "meta", "pattern.json")
-
         # Run the task
         run_pattern_task(self.pattern.id, self.task.id)
 
