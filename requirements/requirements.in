@@ -1,3 +1,2 @@
 django-ansible-base==2025.5.8
-aiohttp
-aiohttp-utils
+

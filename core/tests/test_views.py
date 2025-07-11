@@ -1,5 +1,3 @@
-from unittest.mock import patch
-
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -342,11 +340,10 @@ class PatternViewSetTest(SharedDataMixin, APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["collection_name"], "mynamespace.mycollection")
 
-    @patch("core.views.async_to_sync")
-    def test_pattern_create_view(self, mock_async_to_sync):
+    def test_pattern_create_view(self):
         url = reverse("pattern-list")
         data = {
-            "collection_name": "new.namespace.collection",
+            "collection_name": "newnamespace.collection",
             "collection_version": "1.2.3",
             "collection_version_uri": "https://example.com/new.tar.gz",
             "pattern_name": "new_pattern",
@@ -365,9 +362,8 @@ class PatternViewSetTest(SharedDataMixin, APITestCase):
 
         # Task exists
         task = Task.objects.get(id=task_id)
-        self.assertEqual(task.status, "Initiated")
-        self.assertEqual(task.details.get("model"), "Pattern")
-        self.assertEqual(task.details.get("id"), pattern.id)
+        self.assertEqual(task.status, "Completed")
+        self.assertEqual(task.details.get("info"), "Pattern saved without external definition")
 
 
 class PatternInstanceViewSetTest(SharedDataMixin, APITestCase):
