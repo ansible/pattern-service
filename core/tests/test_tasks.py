@@ -1,6 +1,11 @@
+import json
+import os
+import shutil
+import tempfile
+from typing import List
+from unittest.mock import mock_open
 from unittest.mock import patch
 
-from asgiref.sync import async_to_sync
 from django.test import TestCase
 
 from core.models import ControllerLabel
@@ -11,6 +16,8 @@ from core.tasks import run_pattern_task
 
 
 class SharedDataMixin:
+    temp_dirs: List[str] = []
+
     @classmethod
     def setUpTestData(cls):
         cls.pattern = Pattern.objects.create(
@@ -35,21 +42,46 @@ class SharedDataMixin:
 
         cls.task = Task.objects.create(status="Running", details={"progress": "50%"})
 
+    def register_temp_dir(self, path: str):
+        self.temp_dirs.append(path)
+
+    def create_temp_collection_dir(self) -> str:
+        """
+        Creates and tracks a temp collection directory with pattern.json.
+        """
+        temp_dir = tempfile.mkdtemp()
+        self.register_temp_dir(temp_dir)
+
+        collection_path = os.path.join(temp_dir, "mynamespace-mycollection-1.0.0")
+        pattern_dir = os.path.join(collection_path, "extensions", "patterns", "example_pattern", "meta")
+        os.makedirs(pattern_dir, exist_ok=True)
+
+        with open(os.path.join(pattern_dir, "pattern.json"), "w") as f:
+            json.dump({"mock_key": "mock_value"}, f)
+
+        return collection_path
+
+    def tearDown(self):
+        """
+        Automatically called after each test. Cleans up any temp dirs created.
+        """
+        for temp_dir in getattr(self, "temp_dirs", []):
+            shutil.rmtree(temp_dir, ignore_errors=True)
+        self.temp_dirs.clear()
+
 
 class TaskTests(SharedDataMixin, TestCase):
 
     def test_run_pattern_task_with_uri(self):
+        pattern = self.pattern
 
-        async def mock_download_collectionl(url, collection, version):
+        def mock_download_collectionl(url, collection, version):
             raise Exception("Download failed")
 
         task = Task.objects.create(status="Initiated", details={"model": "Pattern", "id": self.pattern.id})
 
-        async def _run_pattern_task():
-            await run_pattern_task(self.pattern.id, task.id)
-
         with patch("core.tasks.download_collection", new=mock_download_collectionl):
-            async_to_sync(_run_pattern_task)()
+            run_pattern_task(pattern.id, task.id)
 
         task.refresh_from_db()
         self.assertEqual(task.status, "Failed")
@@ -61,11 +93,40 @@ class TaskTests(SharedDataMixin, TestCase):
 
         task = Task.objects.create(status="Initiated", details={"model": "Pattern", "id": pattern.id})
 
-        async def _run_pattern_task():
-            await run_pattern_task(pattern.id, task.id)
-
-        async_to_sync(_run_pattern_task)()
+        run_pattern_task(pattern.id, task.id)
 
         task.refresh_from_db()
         self.assertEqual(task.status, "Completed")
         self.assertIn("Pattern saved without external definition", task.details.get("info", ""))
+
+    @patch("core.tasks.update_task_status", wraps=run_pattern_task.__globals__["update_task_status"])
+    @patch("core.tasks.download_collection")
+    @patch("builtins.open", new_callable=mock_open, read_data='{"mock_key": "mock_value"}')
+    def test_full_status_update_flow(self, mock_open_file, mock_download, mock_update_status):
+        # Mock the download_collection to return a fake path
+        mock_download.return_value = self.create_temp_collection_dir()
+
+        # Fake pattern.json path
+        expected_json_path = os.path.join("/tmp/fake/collection-path", "extensions", "patterns", "example_pattern", "meta", "pattern.json")
+
+        # Run the task
+        run_pattern_task(self.pattern.id, self.task.id)
+
+        # Verify calls to update_task_status
+        expected_calls = [
+            (self.task, "Running", {"info": "Processing pattern"}),
+            (self.task, "Running", {"info": "Downloading collection tarball"}),
+            (self.task, "Completed", {"info": "Pattern processed successfully"}),
+        ]
+        actual_calls = [tuple(call.args) for call in mock_update_status.call_args_list]
+        for expected in expected_calls:
+            self.assertIn(expected, actual_calls)
+
+        # Verify final DB state
+        self.task.refresh_from_db()
+        self.assertEqual(self.task.status, "Completed")
+        self.assertEqual(self.task.details.get("info"), "Pattern processed successfully")
+
+        # Verify pattern_definition was updated and saved
+        self.pattern.refresh_from_db()
+        self.assertEqual(self.pattern.pattern_definition, {"mock_key": "mock_value"})
