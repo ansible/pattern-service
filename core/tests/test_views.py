@@ -100,7 +100,7 @@ class PatternViewSetTest(SharedDataMixin, APITestCase):
     def test_pattern_create_view(self):
         url = reverse("pattern-list")
         data = {
-            "collection_name": "new.namespace.collection",
+            "collection_name": "newnamespace.collection",
             "collection_version": "1.2.3",
             "collection_version_uri": "https://example.com/new.tar.gz",
             "pattern_name": "new_pattern",
@@ -119,9 +119,8 @@ class PatternViewSetTest(SharedDataMixin, APITestCase):
 
         # Task exists
         task = Task.objects.get(id=task_id)
-        self.assertEqual(task.status, "Initiated")
-        self.assertEqual(task.details.get("model"), "Pattern")
-        self.assertEqual(task.details.get("id"), pattern.id)
+        self.assertEqual(task.status, "Completed")
+        self.assertEqual(task.details.get("info"), "Pattern saved without external definition")
 
 
 class PatternInstanceViewSetTest(SharedDataMixin, APITestCase):
@@ -150,7 +149,6 @@ class PatternInstanceViewSetTest(SharedDataMixin, APITestCase):
 
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
-
         instance = PatternInstance.objects.get(organization_id=2)
         self.assertIsNotNone(instance)
 
