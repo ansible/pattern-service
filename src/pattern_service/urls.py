@@ -16,15 +16,14 @@ Including another URLconf
 """
 
 from django.contrib import admin
-from django.urls import include
-from django.urls import path
+from django.urls import include, path
 
-from core.views import ping
-from core.views import test
+from pattern_service.core import urls as core_urls
+from pattern_service.core.views import ping, test
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("api/pattern-service/v1/", include('core.urls')),
+    path("api/pattern-service/v1/", include(core_urls)),
     path("ping/", ping),
     path("api/pattern-service/v1/test/", test),
 ]

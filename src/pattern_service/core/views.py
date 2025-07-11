@@ -1,20 +1,19 @@
-from ansible_base.lib.utils.views.ansible_base import AnsibleBaseView
+from ansible_base.lib.utils.views.ansible_base import (  # type: ignore
+    AnsibleBaseView,
+)
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework.viewsets import ModelViewSet
-from rest_framework.viewsets import ReadOnlyModelViewSet
+from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
-from .models import Automation
-from .models import ControllerLabel
-from .models import Pattern
-from .models import PatternInstance
-from .models import Task
-from .serializers import AutomationSerializer
-from .serializers import ControllerLabelSerializer
-from .serializers import PatternInstanceSerializer
-from .serializers import PatternSerializer
-from .serializers import TaskSerializer
+from .models import Automation, ControllerLabel, Pattern, PatternInstance, Task
+from .serializers import (
+    AutomationSerializer,
+    ControllerLabelSerializer,
+    PatternInstanceSerializer,
+    PatternSerializer,
+    TaskSerializer,
+)
 
 
 class CoreViewSet(AnsibleBaseView):
@@ -30,7 +29,9 @@ class PatternViewSet(CoreViewSet, ModelViewSet):
         serializer.is_valid(raise_exception=True)
         pattern = serializer.save()
 
-        task = Task.objects.create(status="Initiated", details={"model": "Pattern", "id": pattern.id})
+        task = Task.objects.create(
+            status="Initiated", details={"model": "Pattern", "id": pattern.id}
+        )
 
         return Response(
             {
@@ -57,7 +58,10 @@ class PatternInstanceViewSet(CoreViewSet, ModelViewSet):
         instance = serializer.save()
 
         # Create a Task entry to track this processing
-        task = Task.objects.create(status="Initiated", details={"model": "PatternInstance", "id": instance.id})
+        task = Task.objects.create(
+            status="Initiated",
+            details={"model": "PatternInstance", "id": instance.id},
+        )
 
         return Response(
             {

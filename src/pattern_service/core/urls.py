@@ -1,4 +1,4 @@
-from ansible_base.lib.routers import AssociationResourceRouter
+from ansible_base.lib.routers import AssociationResourceRouter  # type: ignore
 
 from .views import AutomationViewSet
 from .views import ControllerLabelViewSet

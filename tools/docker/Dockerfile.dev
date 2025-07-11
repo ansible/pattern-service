@@ -1,0 +1,31 @@
+FROM registry.access.redhat.com/ubi9/ubi:latest
+
+WORKDIR /app
+
+COPY requirements/requirements.txt .
+
+RUN dnf install git python3.11 python3.11-devel python3.11-pip -y
+
+ENV VIRTUAL_ENV=/app/venv
+
+# create virtual environment
+RUN python3.11 -m venv "$VIRTUAL_ENV"
+
+ENV PATH="${VIRTUAL_ENV}/bin:$PATH"
+
+RUN python -m pip install --no-cache-dir -r requirements.txt
+
+# install the pattern service application
+ADD src /app/src
+
+COPY pyproject.toml /app/
+
+COPY  README.md /app/
+
+RUN python -m pip install /app/
+
+RUN aap-pattern-service-manage migrate
+
+EXPOSE 5000
+
+CMD ["aap-pattern-service-manage", "runserver", "0.0.0.0:5000"]
