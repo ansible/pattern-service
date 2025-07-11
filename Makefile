@@ -1,4 +1,4 @@
-.PHONY: build clean push
+.PHONY: build clean push build_amd64
 
 # Image name and tag
 CONTAINER_RUNTIME ?= podman
