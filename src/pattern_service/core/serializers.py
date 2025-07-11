@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from ansible_base.lib.serializers.common import CommonModelSerializer
+from ansible_base.lib.serializers.common import CommonModelSerializer  # type: ignore
 
 from .models import Automation
 from .models import ControllerLabel
