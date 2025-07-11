@@ -1,4 +1,5 @@
 from ansible_base.lib.utils.views.ansible_base import AnsibleBaseView
+from asgiref.sync import async_to_sync
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.request import Request
@@ -32,9 +33,9 @@ class PatternViewSet(CoreViewSet, ModelViewSet):
         serializer.is_valid(raise_exception=True)
         pattern = serializer.save()
 
-        task = Task.objects.create(
-            status="Initiated", details={"model": "Pattern", "id": pattern.id}
-        )
+        task = Task.objects.create(status="Initiated", details={"model": "Pattern", "id": pattern.id})
+        async_to_sync(run_pattern_task)(pattern.id, task.id)
+        headers = self.get_success_headers(serializer.data)
 
         return Response(
             {
@@ -44,6 +45,7 @@ class PatternViewSet(CoreViewSet, ModelViewSet):
                 ),
             },
             status=status.HTTP_202_ACCEPTED,
+            headers=headers,
         )
 
 
