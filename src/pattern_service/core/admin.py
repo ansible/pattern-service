@@ -1,9 +1,9 @@
 from django.contrib import admin
 
-from core import models
+from .models import Automation, ControllerLabel, Pattern, PatternInstance, Task
 
-admin.site.register(models.Pattern)
-admin.site.register(models.ControllerLabel)
-admin.site.register(models.PatternInstance)
-admin.site.register(models.Automation)
-admin.site.register(models.Task)
+admin.site.register(Pattern)
+admin.site.register(ControllerLabel)
+admin.site.register(PatternInstance)
+admin.site.register(Automation)
+admin.site.register(Task)
