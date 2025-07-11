@@ -9,3 +9,5 @@ cryptography==45.0.4
 psycopg>=3.2.4
 requests
 pyjwt>=2.0.0,<3
+aiohttp
+aiohttp-utils
