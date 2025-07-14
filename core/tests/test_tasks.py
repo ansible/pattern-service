@@ -72,19 +72,17 @@ class SharedDataMixin:
 
 class TaskTests(SharedDataMixin, TestCase):
 
-    def test_run_pattern_task_with_uri(self):
+    def test_run_pattern_task_handles_download_failure(self):
         pattern = self.pattern
-
-        def mock_download_collectionl(url, collection, version):
-            raise Exception("Download failed")
 
         task = Task.objects.create(status="Initiated", details={"model": "Pattern", "id": self.pattern.id})
 
-        with patch("core.tasks.download_collection", new=mock_download_collectionl):
+        with patch("core.tasks.download_collection", side_effect=Exception("Download failed")):
             run_pattern_task(pattern.id, task.id)
 
         task.refresh_from_db()
         self.assertEqual(task.status, "Failed")
+        self.assertIn("Download failed", task.details.get("error", ""))
 
     def test_run_pattern_task_without_uri(self):
         pattern = self.pattern
@@ -101,10 +99,9 @@ class TaskTests(SharedDataMixin, TestCase):
 
     @patch("core.tasks.update_task_status", wraps=run_pattern_task.__globals__["update_task_status"])
     @patch("core.tasks.download_collection")
-    @patch("builtins.open", new_callable=mock_open, read_data='{"mock_key": "mock_value"}')
-    def test_full_status_update_flow(self, mock_open_file, mock_download, mock_update_status):
-        # Mock the download_collection to return a fake path
-        mock_download.return_value = self.create_temp_collection_dir()
+    def test_full_status_update_flow(self, mock_download, mock_update_status):
+        temp_dir_path = self.create_temp_collection_dir()
+        mock_download.return_value.__enter__.return_value = temp_dir_path
 
         # Run the task
         run_pattern_task(self.pattern.id, self.task.id)
