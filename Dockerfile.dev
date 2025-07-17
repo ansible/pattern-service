@@ -12,11 +12,12 @@ ADD core /app/core
 
 ADD pattern_service /app/pattern_service
 
-COPY manage.py .
+# Make pattern_service directory writable
+RUN chmod -R a+rw /app/pattern_service
 
-RUN python3 manage.py migrate
+COPY manage.py .
 
 EXPOSE 5000
 
-#CMD ["python3", "/app/manage.py", "runserver", "0.0.0.0:5000"]
+# Run migration at container start time
 CMD ["sh", "-c", "python3 manage.py migrate && python3 manage.py runserver 0.0.0.0:5000"]
