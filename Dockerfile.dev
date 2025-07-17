@@ -12,9 +12,6 @@ ADD core /app/core
 
 ADD pattern_service /app/pattern_service
 
-# Make pattern_service directory writable
-RUN chmod -R a+rw /app/pattern_service
-
 COPY manage.py .
 
 EXPOSE 5000
