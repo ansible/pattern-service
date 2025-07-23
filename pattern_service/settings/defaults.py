@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -102,9 +103,12 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
-}
+# Base URL of your AAP service
+URL = "http://localhost:44926"  # or your default URL
+
+# Whether to verify SSL certificates (True or False)
+VALIDATE_CERTS = False
+
+# Default username and password for authentication
+USERNAME = "admin"
+PASSWORD = "your_default_password_here"

@@ -1,3 +1,9 @@
+import json
+import os
+import shutil
+import tempfile
+from unittest.mock import patch
+
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -282,6 +288,7 @@ class AutomationViewSetTest(SharedDataMixin, APITestCase):
 
 
 class TaskViewSetTest(SharedDataMixin, APITestCase):
+
     def test_task_list_view(self):
         url = reverse("task-list")
         response = self.client.get(url)

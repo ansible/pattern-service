@@ -4,9 +4,9 @@ WORKDIR /app
 
 COPY requirements/requirements.txt .
 
-RUN dnf install python3-pip -y
+RUN dnf install python3.11 python3.11-pip -y
 
-RUN python3 -m pip install --no-cache-dir -r requirements.txt
+RUN python3.11 -m pip install --no-cache-dir -r requirements.txt
 
 ADD core /app/core
 
@@ -16,5 +16,6 @@ COPY manage.py .
 
 EXPOSE 5000
 
-# Run migration at container start time
-CMD ["sh", "-c", "python3 manage.py migrate && python3 manage.py runserver 0.0.0.0:5000"]
+ENV SQLITE_PATH=/tmp/db.sqlite3
+
+CMD ["sh", "-c", "python3.11 manage.py migrate && python3.11 manage.py runserver 0.0.0.0:5000"]

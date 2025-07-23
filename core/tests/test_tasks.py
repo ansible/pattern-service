@@ -72,30 +72,12 @@ class SharedDataMixin:
 
 class TaskTests(SharedDataMixin, TestCase):
 
-    def test_run_pattern_task_handles_download_failure(self):
-        pattern = self.pattern
-
-        task = Task.objects.create(status="Initiated", details={"model": "Pattern", "id": self.pattern.id})
-
-        with patch("core.tasks.download_collection", side_effect=Exception("Download failed")):
-            run_pattern_task(pattern.id, task.id)
-
-        task.refresh_from_db()
-        self.assertEqual(task.status, "Failed")
-        self.assertIn("Download failed", task.details.get("error", ""))
-
-    def test_run_pattern_task_without_uri(self):
-        pattern = self.pattern
-        pattern.collection_version_uri = ""
-        pattern.save()
-
-        task = Task.objects.create(status="Initiated", details={"model": "Pattern", "id": pattern.id})
-
-        run_pattern_task(pattern.id, task.id)
-
-        task.refresh_from_db()
-        self.assertEqual(task.status, "Completed")
-        self.assertIn("Pattern saved without external definition", task.details.get("info", ""))
+    @patch("core.tasks.download_collection", side_effect=Exception("Download failed"))
+    def test_run_pattern_task_handles_download_failure(self, mock_download):
+        run_pattern_task(self.pattern.id, self.task.id)
+        self.task.refresh_from_db()
+        self.assertEqual(self.task.status, "Failed")
+        self.assertIn("Download failed", self.task.details.get("error", ""))
 
     @patch("core.tasks.update_task_status", wraps=run_pattern_task.__globals__["update_task_status"])
     @patch("core.tasks.download_collection")

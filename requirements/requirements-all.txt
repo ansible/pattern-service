@@ -38,7 +38,9 @@ django-crum==0.7.9
 djangorestframework==3.16.0
     # via django-ansible-base
 dynaconf==3.2.11
-    # via django-ansible-base
+    # via
+    #   -r requirements/requirements.in
+    #   django-ansible-base
 flake8==6.1.0
     # via -r requirements/requirements-dev.in
 flynt==1.0.2
@@ -75,8 +77,10 @@ pyflakes==3.1.0
     # via flake8
 pyjwt==2.10.1
     # via -r requirements/requirements-dev.in
-requests==2.32.4
-    # via -r requirements/requirements-dev.in
+requests==2.32.3
+    # via
+    #   -r requirements/requirements-dev.in
+    #   -r requirements/requirements.in
 sqlparse==0.5.3
     # via
     #   django
