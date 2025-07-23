@@ -288,7 +288,6 @@ class AutomationViewSetTest(SharedDataMixin, APITestCase):
 
 
 class TaskViewSetTest(SharedDataMixin, APITestCase):
-
     def test_task_list_view(self):
         url = reverse("task-list")
         response = self.client.get(url)
