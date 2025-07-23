@@ -53,6 +53,15 @@ class SharedDataMixin:
 
 
 class PatternViewSetTest(SharedDataMixin, APITestCase):
+    def create_temp_collection_dir(self):
+        temp_dir = tempfile.mkdtemp()
+        os.makedirs(os.path.join(temp_dir, "extensions", "patterns", "new_pattern", "meta"), exist_ok=True)
+        pattern_json_path = os.path.join(temp_dir, "extensions", "patterns", "new_pattern", "meta", "pattern.json")
+        with open(pattern_json_path, "w") as f:
+            json.dump({"mock_key": "mock_value"}, f)
+        self.addCleanup(lambda: shutil.rmtree(temp_dir, ignore_errors=True))
+        return temp_dir
+
     def test_pattern_list_view(self):
         url = reverse("pattern-list")
         response = self.client.get(url)
@@ -66,10 +75,14 @@ class PatternViewSetTest(SharedDataMixin, APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["collection_name"], "mynamespace.mycollection")
 
-    def test_pattern_create_view(self):
+    @patch("core.tasks.download_collection")
+    def test_pattern_create_view(self, mock_download_collection):
+        temp_dir = self.create_temp_collection_dir()  # Simulate a valid pattern.json
+        mock_download_collection.return_value.__enter__.return_value = temp_dir
+
         url = reverse("pattern-list")
         data = {
-            "collection_name": "new.namespace.collection",
+            "collection_name": "newnamespace.collection",
             "collection_version": "1.2.3",
             "collection_version_uri": "https://example.com/new.tar.gz",
             "pattern_name": "new_pattern",
@@ -88,9 +101,8 @@ class PatternViewSetTest(SharedDataMixin, APITestCase):
 
         # Task exists
         task = Task.objects.get(id=task_id)
-        self.assertEqual(task.status, "Initiated")
-        self.assertEqual(task.details.get("model"), "Pattern")
-        self.assertEqual(task.details.get("id"), pattern.id)
+        self.assertEqual(task.status, "Completed")
+        self.assertEqual(task.details.get("info"), "Pattern processed successfully")
 
     def test_pattern_delete_view(self):
         # Create a separate pattern for deletion

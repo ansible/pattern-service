@@ -1,10 +1,14 @@
+import os
 from urllib.parse import urlparse
 
 from dynaconf import Dynaconf
 
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 # Load defaults first, then override with .env or environment variables
 settings = Dynaconf(
-    settings_files=["settings/defaults.py", ".env"],  # defaults, then env overrides
+    settings_files=[os.path.join(BASE_DIR, "defaults.py"), os.path.join(BASE_DIR, "..", ".env")],  # defaults, then env overrides
     envvar_prefix="AAP",
     envvar_cast=True,
     load_dotenv=True,
