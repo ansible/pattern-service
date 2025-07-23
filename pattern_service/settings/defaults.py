@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -59,6 +60,19 @@ TEMPLATES = [
 WSGI_APPLICATION = "pattern_service.wsgi.application"
 
 
+# Database
+# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.getenv("SQLITE_PATH", BASE_DIR / "pattern_service" / "db.sqlite3"),
+    }
+}
+
+
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
@@ -102,9 +116,12 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
-}
+# Base URL of your AAP service
+URL = "http://localhost:44926"  # or your default URL
+
+# Whether to verify SSL certificates (True or False)
+VALIDATE_CERTS = False
+
+# Default username and password for authentication
+USERNAME = "admin"
+PASSWORD = "your_default_password_here"

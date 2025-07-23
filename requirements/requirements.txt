@@ -6,8 +6,12 @@
 #
 asgiref==3.8.1
     # via django
+certifi==2025.7.14
+    # via requests
 cffi==1.17.1
     # via cryptography
+charset-normalizer==3.4.2
+    # via requests
 cryptography==45.0.4
     # via django-ansible-base
 django==4.2.23
@@ -22,12 +26,20 @@ django-crum==0.7.9
 djangorestframework==3.16.0
     # via django-ansible-base
 dynaconf==3.2.11
-    # via django-ansible-base
+    # via
+    #   -r requirements/requirements.in
+    #   django-ansible-base
+idna==3.10
+    # via requests
 inflection==0.5.1
     # via django-ansible-base
 pycparser==2.22
     # via cffi
+requests==2.32.3
+    # via -r requirements/requirements.in
 sqlparse==0.5.3
     # via
     #   django
     #   django-ansible-base
+urllib3==2.5.0
+    # via requests
