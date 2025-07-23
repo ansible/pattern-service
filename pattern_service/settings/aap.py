@@ -1,32 +1,3 @@
-# from urllib.parse import urlparse
-# from typing import Optional
-# from pydantic import Field
-# from pydantic import field_validator
-# from pydantic_settings import BaseSettings, SettingsConfigDict
-# from functools import lru_cache
-
-# class AAPSettings(BaseSettings):
-#     # AAP_INTERNAL_URL: For internal service-to-service communication
-#     internal_url: Optional[str] = Field(None, env=["AAP_INTERNAL_URL"])
-#     verify_ssl: bool = Field(False, env=["AAP_VALIDATE_CERTS", "CONTROLLER_VERIFY_SSL", "TOWER_VERIFY_SSL"])
-
-#     @field_validator("internal_url", mode="before")
-#     @classmethod
-#     def ensure_scheme_and_validate(cls, v: Optional[str]) -> Optional[str]:
-#         if v is None:
-#             return v
-#         if not v.startswith(("http://", "https://")):
-#             v = f"https://{v}"
-#         parsed = urlparse(v)
-#         if not parsed.scheme or not parsed.netloc:
-#             raise ValueError(f"Invalid controller host: {v!r}")
-#         return v.rstrip("/")
-
-
-# @lru_cache()
-# def get_aap_settings() -> AAPSettings:
-#     return AAPSettings()
-
 from urllib.parse import urlparse
 
 from dynaconf import Dynaconf

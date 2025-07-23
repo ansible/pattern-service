@@ -288,7 +288,6 @@ class AutomationViewSetTest(SharedDataMixin, APITestCase):
 
 
 class TaskViewSetTest(SharedDataMixin, APITestCase):
-
     def test_task_list_view(self):
         url = reverse("task-list")
         response = self.client.get(url)
@@ -372,12 +371,15 @@ class PatternViewSetTest(SharedDataMixin, APITestCase):
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
 
+        # Pattern created
         pattern = Pattern.objects.get(pattern_name="new_pattern")
         self.assertIsNotNone(pattern)
 
+        # Task id returned directly
         task_id = response.data.get("task_id")
         self.assertIsInstance(task_id, int)
 
+        # Task exists
         task = Task.objects.get(id=task_id)
         self.assertEqual(task.status, "Completed")
         self.assertEqual(task.details.get("info"), "Pattern processed successfully")
@@ -409,6 +411,7 @@ class PatternInstanceViewSetTest(SharedDataMixin, APITestCase):
 
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+
         instance = PatternInstance.objects.get(organization_id=2)
         self.assertIsNotNone(instance)
 
