@@ -53,6 +53,15 @@ class SharedDataMixin:
 
 
 class PatternViewSetTest(SharedDataMixin, APITestCase):
+    def create_temp_collection_dir(self):
+        temp_dir = tempfile.mkdtemp()
+        os.makedirs(os.path.join(temp_dir, "extensions", "patterns", "new_pattern", "meta"), exist_ok=True)
+        pattern_json_path = os.path.join(temp_dir, "extensions", "patterns", "new_pattern", "meta", "pattern.json")
+        with open(pattern_json_path, "w") as f:
+            json.dump({"mock_key": "mock_value"}, f)
+        self.addCleanup(lambda: shutil.rmtree(temp_dir, ignore_errors=True))
+        return temp_dir
+
     def test_pattern_list_view(self):
         url = reverse("pattern-list")
         response = self.client.get(url)
@@ -66,7 +75,11 @@ class PatternViewSetTest(SharedDataMixin, APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["collection_name"], "mynamespace.mycollection")
 
-    def test_pattern_create_view(self):
+    @patch("core.tasks.download_collection")
+    def test_pattern_create_view(self, mock_download_collection):
+        temp_dir = self.create_temp_collection_dir()  # Simulate a valid pattern.json
+        mock_download_collection.return_value.__enter__.return_value = temp_dir
+
         url = reverse("pattern-list")
         data = {
             "collection_name": "new.namespace.collection",
@@ -88,9 +101,8 @@ class PatternViewSetTest(SharedDataMixin, APITestCase):
 
         # Task exists
         task = Task.objects.get(id=task_id)
-        self.assertEqual(task.status, "Initiated")
-        self.assertEqual(task.details.get("model"), "Pattern")
-        self.assertEqual(task.details.get("id"), pattern.id)
+        self.assertEqual(task.status, "Completed")
+        self.assertEqual(task.details.get("info"), "Pattern processed successfully")
 
     def test_pattern_delete_view(self):
         # Create a separate pattern for deletion
@@ -328,98 +340,3 @@ class TaskViewSetTest(SharedDataMixin, APITestCase):
         url = reverse("task-detail", args=[99999])
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-<<<<<<< HEAD
-=======
-
-
-class PatternViewSetTest(SharedDataMixin, APITestCase):
-    def create_temp_collection_dir(self):
-        temp_dir = tempfile.mkdtemp()
-        os.makedirs(os.path.join(temp_dir, "extensions", "patterns", "new_pattern", "meta"), exist_ok=True)
-        pattern_json_path = os.path.join(temp_dir, "extensions", "patterns", "new_pattern", "meta", "pattern.json")
-        with open(pattern_json_path, "w") as f:
-            json.dump({"mock_key": "mock_value"}, f)
-        self.addCleanup(lambda: shutil.rmtree(temp_dir, ignore_errors=True))
-        return temp_dir
-
-    def test_pattern_list_view(self):
-        url = reverse("pattern-list")
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]["pattern_name"], "example_pattern")
-
-    def test_pattern_detail_view(self):
-        url = reverse("pattern-detail", args=[self.pattern.pk])
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["collection_name"], "mynamespace.mycollection")
-
-    @patch("core.tasks.download_collection")
-    def test_pattern_create_view(self, mock_download_collection):
-        temp_dir = self.create_temp_collection_dir()  # Simulate a valid pattern.json
-        mock_download_collection.return_value.__enter__.return_value = temp_dir
-
-        url = reverse("pattern-list")
-        data = {
-            "collection_name": "newnamespace.collection",
-            "collection_version": "1.2.3",
-            "collection_version_uri": "https://example.com/new.tar.gz",
-            "pattern_name": "new_pattern",
-        }
-
-        response = self.client.post(url, data, format="json")
-        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
-
-        # Pattern created
-        pattern = Pattern.objects.get(pattern_name="new_pattern")
-        self.assertIsNotNone(pattern)
-
-        # Task id returned directly
-        task_id = response.data.get("task_id")
-        self.assertIsInstance(task_id, int)
-
-        # Task exists
-        task = Task.objects.get(id=task_id)
-        self.assertEqual(task.status, "Completed")
-        self.assertEqual(task.details.get("info"), "Pattern processed successfully")
-
-
-class PatternInstanceViewSetTest(SharedDataMixin, APITestCase):
-    def test_pattern_instance_list_view(self):
-        url = reverse("patterninstance-list")
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
-
-    def test_pattern_instance_detail_view(self):
-        url = reverse("patterninstance-detail", args=[self.pattern_instance.pk])
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["organization_id"], 1)
-
-    def test_pattern_instance_create_view(self):
-        url = reverse("patterninstance-list")
-        data = {
-            "organization_id": 2,
-            "controller_project_id": 0,
-            "controller_ee_id": 0,
-            "credentials": {"user": "tester"},
-            "executors": [],
-            "pattern": self.pattern.id,
-        }
-
-        response = self.client.post(url, data, format="json")
-        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
-
-        instance = PatternInstance.objects.get(organization_id=2)
-        self.assertIsNotNone(instance)
-
-        task_id = response.data.get("task_id")
-        self.assertIsInstance(task_id, int)
-
-        task = Task.objects.get(id=task_id)
-        self.assertEqual(task.status, "Initiated")
-        self.assertEqual(task.details.get("model"), "PatternInstance")
-        self.assertEqual(task.details.get("id"), instance.id)
->>>>>>> fbc5163 (Update)
