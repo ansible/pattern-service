@@ -72,7 +72,7 @@ disallow_subclassing_any = false
 disallow_untyped_decorators = false
 
 [[tool.mypy.overrides]]
-module = ["ansible_base.*", "dotenv.*"]
+module = ["ansible_base.*", "rest_framework.*", "dynaconf.*"]
 ignore_missing_imports = true
 
 

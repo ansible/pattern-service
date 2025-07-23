@@ -8,5 +8,5 @@ asgiref==3.8.1
 cryptography==45.0.4
 psycopg>=3.2.4
 requests
+types-requests
 pyjwt>=2.0.0,<3
-
