@@ -13,7 +13,7 @@ from typing import List
 
 from django.db import transaction
 
-from core.controller_client import assign_execute_roles
+from core.controller_client import assign_execute_roles, build_collection_uri
 from core.controller_client import create_execution_environment
 from core.controller_client import create_job_templates
 from core.controller_client import create_labels
@@ -104,13 +104,14 @@ def pattern_task(pattern_id: int, task_id: int):
     try:
         pattern = Pattern.objects.get(id=pattern_id)
         update_task_status(task, "Running", {"info": "Processing pattern"})
-        with download_collection(pattern.collection_name.replace(".", "-"), pattern.collection_version) as collection_path:
+        collection_name: str = pattern.collection_name.replace(".", "-")
+        with download_collection(collection_name, pattern.collection_version) as collection_path:
             path_to_definition = os.path.join(collection_path, "extensions", "patterns", pattern.pattern_name, "meta", "pattern.json")
             with open(path_to_definition, "r") as file:
                 definition = json.load(file)
 
             pattern.pattern_definition = definition
-            pattern.collection_version_uri = pattern.collection_version_uri
+            pattern.collection_version_uri = build_collection_uri(collection_name, pattern.collection_version)
             pattern.save(update_fields=["pattern_definition", "collection_version_uri"])
         update_task_status(task, "Completed", {"info": "Pattern processed successfully"})
     except FileNotFoundError:

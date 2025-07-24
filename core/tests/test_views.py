@@ -189,12 +189,6 @@ class PatternInstanceViewSetTest(SharedDataMixin, APITestCase):
             "pattern": self.another_pattern.id,
         }
 
-    def test_pattern_instance_list_view(self):
-        url = reverse("patterninstance-list")
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
-
     def test_pattern_instance_detail_view(self):
         url = reverse("patterninstance-detail", args=[self.pattern_instance.pk])
         response = self.client.get(url)
@@ -206,12 +200,6 @@ class PatternInstanceViewSetTest(SharedDataMixin, APITestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
-
-    def test_pattern_instance_detail_view(self):
-        url = reverse("patterninstance-detail", args=[self.pattern_instance.pk])
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["organization_id"], 1)
 
     @patch('core.views.run_pattern_instance_task')
     def test_create_pattern_instance_and_task(self, mock_run_task):
