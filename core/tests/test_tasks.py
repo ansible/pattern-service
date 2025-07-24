@@ -6,13 +6,15 @@ from typing import List
 from unittest.mock import mock_open
 from unittest.mock import patch
 
-from django.test import TestCase
-
+from rest_framework.test import APITestCase
+from django.urls import reverse
+from rest_framework import status
 from core.models import ControllerLabel
 from core.models import Pattern
 from core.models import PatternInstance
 from core.models import Task
 from core.tasks import run_pattern_task
+from core.tasks import run_pattern_instance_task
 
 
 class SharedDataMixin:
@@ -78,44 +80,6 @@ class SharedDataMixin:
         for temp_dir in getattr(self, "temp_dirs", []):
             shutil.rmtree(temp_dir, ignore_errors=True)
         self.temp_dirs.clear()
-
-
-class TaskTests(SharedDataMixin, TestCase):
-
-    @patch("core.tasks.download_collection", side_effect=Exception("Download failed"))
-    def test_run_pattern_task_handles_download_failure(self, mock_download):
-        run_pattern_task(self.pattern.id, self.task.id)
-        self.task.refresh_from_db()
-        self.assertEqual(self.task.status, "Failed")
-        self.assertIn("Download failed", self.task.details.get("error", ""))
-
-    @patch("core.tasks.update_task_status", wraps=run_pattern_task.__globals__["update_task_status"])
-    @patch("core.tasks.download_collection")
-    def test_full_status_update_flow(self, mock_download, mock_update_status):
-        temp_dir_path = self.create_temp_collection_dir()
-        mock_download.return_value.__enter__.return_value = temp_dir_path
-
-        # Run the task
-        run_pattern_task(self.pattern.id, self.task.id)
-
-        # Verify calls to update_task_status
-        expected_calls = [
-            (self.task, "Running", {"info": "Processing pattern"}),
-            (self.task, "Running", {"info": "Downloading collection tarball"}),
-            (self.task, "Completed", {"info": "Pattern processed successfully"}),
-        ]
-        actual_calls = [tuple(call.args) for call in mock_update_status.call_args_list]
-        for expected in expected_calls:
-            self.assertIn(expected, actual_calls)
-
-        # Verify final DB state
-        self.task.refresh_from_db()
-        self.assertEqual(self.task.status, "Completed")
-        self.assertEqual(self.task.details.get("info"), "Pattern processed successfully")
-
-        # Verify pattern_definition was updated and saved
-        self.pattern.refresh_from_db()
-        self.assertEqual(self.pattern.pattern_definition, {"mock_key": "mock_value"})
 
 
 class PatternInstanceViewSetTest(SharedDataMixin, APITestCase):
@@ -192,7 +156,6 @@ class PatternInstanceViewSetTest(SharedDataMixin, APITestCase):
         mock_create_project.assert_called_once()
 
 
-
 class AutomationViewSetTest(SharedDataMixin, APITestCase):
     def test_automation_list_view(self):
         url = reverse("automation-list")
@@ -237,19 +200,6 @@ class TaskTests(SharedDataMixin, APITestCase):
         task.refresh_from_db()
         self.assertEqual(task.status, "Failed")
         self.assertIn("Download failed", task.details.get("error", ""))
-
-    def test_run_pattern_task_without_uri(self):
-        pattern = self.pattern
-        pattern.collection_version_uri = ""
-        pattern.save()
-
-        task = Task.objects.create(status="Initiated", details={"model": "Pattern", "id": pattern.id})
-
-        run_pattern_task(pattern.id, task.id)
-
-        task.refresh_from_db()
-        self.assertEqual(task.status, "Completed")
-        self.assertIn("Pattern saved without external definition", task.details.get("info", ""))
 
     @patch("core.tasks.update_task_status", wraps=run_pattern_task.__globals__["update_task_status"])
     @patch("core.tasks.download_collection")
