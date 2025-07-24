@@ -8,6 +8,7 @@ import tarfile
 import tempfile
 from typing import Iterator
 
+from .controller_client import build_collection_uri
 from .controller_client import get
 from .models import Pattern
 from .models import Task
