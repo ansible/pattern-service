@@ -63,13 +63,23 @@ WSGI_APPLICATION = "pattern_service.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+# Default DB path
+default_path = BASE_DIR / "db.sqlite3"
+
+# Use environment variable if set, else default
+env_path = os.getenv("SQLITE_PATH")
+db_path = Path(env_path) if env_path else default_path
+
+# Ensure DB directory exists
+db_path.parent.mkdir(parents=True, exist_ok=True)
+
+# Database configuration
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.getenv("SQLITE_PATH", BASE_DIR / "pattern_service" / "db.sqlite3"),
+        'NAME': str(db_path),
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
