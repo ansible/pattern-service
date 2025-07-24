@@ -36,3 +36,8 @@ def get(path: str, *, params: Optional[Dict] = None) -> requests.Response:
     response.raise_for_status()
 
     return response
+
+
+def build_collection_uri(collection: str, version: str) -> str:
+    filename = f"{collection}-{version}.tar.gz"
+    return f"{settings.url}/api/galaxy/v3/plugin/ansible/content/published/collections/artifacts/{filename}"
