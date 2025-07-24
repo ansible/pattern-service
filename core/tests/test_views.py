@@ -75,7 +75,7 @@ class PatternViewSetTest(SharedDataMixin, APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["collection_name"], "mynamespace.mycollection")
 
-    @patch("core.tasks.download_collection")
+    @patch("core.services.download_collection")
     def test_pattern_create_view(self, mock_download_collection):
         temp_dir = self.create_temp_collection_dir()  # Simulate a valid pattern.json
         mock_download_collection.return_value.__enter__.return_value = temp_dir
