@@ -3,9 +3,9 @@ from unittest.mock import patch
 
 import requests
 
-from core.tasks import _aap_session
-from core.tasks import get_http_session
-from core.tasks import post
+from core.controller_client import _aap_session
+from core.controller_client import get_http_session
+from core.controller_client import post
 
 
 def _fake_response(status_code: int, payload: dict | list) -> requests.Response:
@@ -22,11 +22,6 @@ def _fake_response(status_code: int, payload: dict | list) -> requests.Response:
     return resp
 
 
-# ---------------------------------------------------------------------------
-# 1. get_http_session()
-# ---------------------------------------------------------------------------
-
-
 def test_get_http_session_caches():
     """Subsequent calls without force_refresh must return the *same* object."""
     s1 = get_http_session()
@@ -37,12 +32,7 @@ def test_get_http_session_caches():
     assert s3 is not s1 and s3 is _aap_session
 
 
-# ---------------------------------------------------------------------------
-# 2. post(): success case
-# ---------------------------------------------------------------------------
-
-
-@patch("core.tasks.get_http_session")
+@patch("core.controller_client.get_http_session")
 def test_post_success(mock_get_http_session):
     session = MagicMock()
     session.post.return_value = _fake_response(201, {"id": 99})
@@ -52,12 +42,7 @@ def test_post_success(mock_get_http_session):
     session.post.assert_called_once()
 
 
-# ---------------------------------------------------------------------------
-# post(): 400 duplicate then lookup
-# ---------------------------------------------------------------------------
-
-
-@patch("core.tasks.get_http_session")
+@patch("core.controller_client.get_http_session")
 def test_post_duplicate_name(mock_get_http_session):
     session = MagicMock()
     session.post.return_value = _fake_response(400, {"error": "duplicate"})

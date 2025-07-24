@@ -3,7 +3,6 @@ from urllib.parse import urlparse
 
 from dynaconf import Dynaconf
 
-
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Load defaults first, then override with .env or environment variables

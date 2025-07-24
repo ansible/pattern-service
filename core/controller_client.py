@@ -1,24 +1,112 @@
 import logging
-import requests
-from typing import Dict, List, Optional, Sequence
-from requests import Session
-from requests.auth import HTTPBasicAuth
-from pattern_service.settings.aap import get_aap_settings
-from .models import Pattern
-from .models import PatternInstance
-from .models import ControllerLabel
+import random
+import time
+import urllib.parse
 from typing import Any
 from typing import Dict
 from typing import List
 from typing import Optional
 from typing import Sequence
 
+import requests
+from requests import Session
+from requests.auth import HTTPBasicAuth
+from requests.exceptions import HTTPError
+from requests.exceptions import RequestException
+from requests.exceptions import Timeout
+
+from pattern_service.settings.aap import get_aap_settings
+
+from .models import ControllerLabel
+from .models import Pattern
+from .models import PatternInstance
 
 logger = logging.getLogger(__name__)
 
 _aap_session: Optional[Session] = None
 
 settings = get_aap_settings()
+
+
+class RetryError(Exception):
+    """Custom exception raised when a retry limit is reached."""
+
+    def __init__(self, msg: str, request=None, response=None):
+        super().__init__(msg)
+        self.request = request
+        self.response = response
+
+
+def wait_for_project_sync(
+    project_id: str, *, max_retries: int = 15, initial_delay_seconds: float = 1, max_delay_seconds: float = 60, timeout_seconds: float = 30
+) -> None:
+    """
+    Polls the project status until it is 'successful' or max_retries is reached.
+
+    Args:
+        project_id: The ID of the project to check.
+        max_retries: The maximum number of times to retry checking the status.
+        initial_delay_seconds: The initial delay in seconds before the first retry.
+        max_delay_seconds: The maximum delay in seconds for exponential backoff.
+        timeout_seconds: The maximum time in seconds to wait for each HTTP request.
+
+    Raises:
+        RetryError: If the project does not sync successfully after max_retries.
+        HTTPError: If an HTTP error (4xx, 5xx) occurs that is not due to a timeout.
+        RequestException: For other network-related issues.
+    """
+    session = get_http_session()
+    project_endpoint = urllib.parse.urljoin(self.url, f"/api/controller/v2/projects/{project_id}")
+    current_delay = initial_delay_seconds
+
+    for attempt in range(1, max_retries + 1):
+        logger.debug(f"Attempting project sync check for project {project_id}, attempt #{attempt}")
+
+        try:
+            r = session.get(project_endpoint, timeout=timeout_seconds)
+            r.raise_for_status()
+
+            response_data = r.json()
+            status = response_data.get("status")
+
+            if status == "successful":
+                logger.info(f"Project {project_id} synced successfully after {attempt} attempts.")
+                return  # Success! Exit the function
+
+            logger.info(f"Project {project_id} status is '{status}'. Will retry...")
+
+        except Timeout as e:
+            logger.warning(f"Project sync check for {project_id} timed out on attempt #{attempt}: {e}")
+        except HTTPError as e:
+            # 429 (Too Many Requests) or 408 (Request Timeout) might be retryable
+            if 400 <= e.response.status_code < 500 and e.response.status_code not in [408, 429]:
+                logger.error(f"Non-retryable HTTP client error ({e.response.status_code}) " f"during project sync for {project_id}: {e.response.text}")
+                raise  # Re-raise immediately if it's a non-transient
+            else:
+                logger.warning(f"Retrying on HTTP error ({e.response.status_code}) " f"for project {project_id} on attempt #{attempt}: {e.response.text}")
+        except RequestException as e:
+            # Catches connection errors, other requests-related issues
+            logger.warning(f"Network error during project sync for {project_id} on attempt #{attempt}: {e}")
+        except ValueError as e:
+            logger.error(f"Failed to decode JSON response for project {project_id} on attempt #{attempt}: {e}. Response: {r.text if r else 'N/A'}")
+        except Exception as e:
+            logger.error(f"An unexpected error occurred during project sync for {project_id} on attempt #{attempt}: {type(e).__name__}: {e}")
+
+        # If we reach here, it means the sync was not successful or an error occurred.
+        # Check if this was the last attempt
+        if attempt == max_retries:
+            final_msg = f"Project {project_id} has not synced successfully after {max_retries} attempts. " "Check logs for more information."
+            logger.error(final_msg)
+            raise RetryError(final_msg, request=r.request if r else None, response=r.response if r else None)
+
+        sleep_duration = min(current_delay, max_delay_seconds)
+        sleep_duration_with_jitter = random.uniform(sleep_duration * 0.8, sleep_duration * 1.2)
+
+        logger.debug(f"Waiting for {sleep_duration_with_jitter:.2f} seconds before next attempt...")
+        time.sleep(sleep_duration_with_jitter)
+
+        current_delay *= 2
+
 
 def get_http_session(force_refresh: bool = False) -> Session:
     """Returns a cached Session instance with AAP credentials."""
@@ -94,14 +182,18 @@ def create_project(instance: PatternInstance, pattern: Pattern, pattern_def: Dic
         The created project ID.
     """
     project_def = pattern_def["aap_resources"]["controller_project"]
-    project_def.update({
-        "organization": instance.organization_id,
-        "scm_type": "archive",
-        "scm_url": pattern.collection_version_uri,
-        "credential": instance.credentials.get("project"),
-    })
+    project_def.update(
+        {
+            "organization": instance.organization_id,
+            "scm_type": "archive",
+            "scm_url": pattern.collection_version_uri,
+            "credential": instance.credentials.get("project"),
+        }
+    )
     logger.debug(f"Project definition: {project_def}")
-    return post("/api/controller/v2/projects/", project_def)["id"]
+    project_id = post("/api/controller/v2/projects/", project_def)["id"]
+    wait_for_project_sync(project_id)
+    return project_id
 
 
 def create_execution_environment(instance: PatternInstance, pattern_def: Dict) -> int:
@@ -115,12 +207,14 @@ def create_execution_environment(instance: PatternInstance, pattern_def: Dict) -
     """
     ee_def = pattern_def["aap_resources"]["controller_execution_environment"]
     image_name = ee_def.pop("image_name")
-    ee_def.update({
-        "organization": instance.organization_id,
-        "credential": instance.credentials.get("ee"),
-        "image": f"{settings.url.split('//')[-1]}/{image_name}",
-        "pull": ee_def.get("pull") or "missing",
-    })
+    ee_def.update(
+        {
+            "organization": instance.organization_id,
+            "credential": instance.credentials.get("ee"),
+            "image": f"{settings.url.split('//')[-1]}/{image_name}",
+            "pull": ee_def.get("pull") or "missing",
+        }
+    )
     logger.debug(f"Execution Environment definition: {ee_def}")
     return post("/api/controller/v2/execution_environments/", ee_def)["id"]
 

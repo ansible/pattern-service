@@ -1,11 +1,29 @@
-import contextlib, io, json, os, shutil, tarfile, tempfile
+import contextlib
+import io
+import json
 import logging
-from typing import Iterator, List, Dict
+import os
+import shutil
+import tarfile
+import tempfile
+from typing import Any
+from typing import Dict
+from typing import Iterator
+from typing import List
 
-from core.models import Pattern, PatternInstance, Task
-from core.serializers import PatternInstanceSerializer, TaskSerializer
-from controller_client import get, create_labels, create_project, create_execution_environment, create_job_templates, assign_execute_roles
 from django.db import transaction
+
+from core.controller_client import assign_execute_roles
+from core.controller_client import create_execution_environment
+from core.controller_client import create_job_templates
+from core.controller_client import create_labels
+from core.controller_client import create_project
+from core.controller_client import get
+from core.models import ControllerLabel
+from core.models import Pattern
+from core.models import PatternInstance
+from core.models import Task
+from core.serializers import PatternInstanceSerializer
 
 logger = logging.getLogger(__name__)
 
@@ -14,9 +32,9 @@ def update_task_status(task: Task, status_: str, details: dict):
     """
     Updates the status and details of a Task object.
     """
-    serializer = TaskSerializer(task, data={"status": status_, "details": details}, partial=True)
-    serializer.is_valid(raise_exception=True)
-    serializer.save()
+    task.status = status_
+    task.details = details
+    task.save()
 
 
 @contextlib.contextmanager
@@ -62,7 +80,7 @@ def save_instance_state(instance: PatternInstance, project_id: int, ee_id: int, 
                 "controller_project_id": project_id,
                 "controller_execution_environment_id": ee_id,
             },
-            partial=True
+            partial=True,
         )
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
