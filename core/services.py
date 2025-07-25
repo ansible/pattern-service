@@ -13,7 +13,8 @@ from typing import List
 
 from django.db import transaction
 
-from core.controller_client import assign_execute_roles, build_collection_uri
+from core.controller_client import assign_execute_roles
+from core.controller_client import build_collection_uri
 from core.controller_client import create_execution_environment
 from core.controller_client import create_job_templates
 from core.controller_client import create_labels
@@ -23,7 +24,6 @@ from core.models import ControllerLabel
 from core.models import Pattern
 from core.models import PatternInstance
 from core.models import Task
-from core.serializers import PatternInstanceSerializer
 
 logger = logging.getLogger(__name__)
 
@@ -74,17 +74,9 @@ def save_instance_state(instance: PatternInstance, project_id: int, ee_id: int, 
         automations: List of job template metadata.
     """
     with transaction.atomic():
-        serializer = PatternInstanceSerializer(
-            instance,
-            data={
-                "controller_project_id": project_id,
-                "controller_execution_environment_id": ee_id,
-            },
-            partial=True,
-        )
-        serializer.is_valid(raise_exception=True)
-        instance = serializer.save()
-
+        instance.controller_project_id = project_id
+        instance.controller_ee_id = ee_id
+        instance.save()
         for label in labels:
             instance.controller_labels.add(label)
         for auto in automations:

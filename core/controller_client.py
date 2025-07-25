@@ -1,7 +1,9 @@
+import json
 import logging
 import random
 import time
 import urllib.parse
+from functools import wraps
 from typing import Any
 from typing import Dict
 from typing import List
@@ -37,75 +39,63 @@ class RetryError(Exception):
         self.response = response
 
 
-def wait_for_project_sync(
-    project_id: str, *, max_retries: int = 15, initial_delay_seconds: float = 1, max_delay_seconds: float = 60, timeout_seconds: float = 30
-) -> None:
+def build_collection_uri(collection: str, version: str) -> str:
+    filename = f"{collection}-{version}.tar.gz"
+    return f"{settings.url}/api/galaxy/v3/plugin/ansible/content/published/collections/artifacts/{filename}"
+
+
+def wait_for_project_sync(project_id: str, *, max_retries: int = 15, initial_delay: float = 1, max_delay: float = 60, timeout: float = 30) -> None:
     """
-    Polls the project status until it is 'successful' or max_retries is reached.
+    Polls the AAP Controller project endpoint until the project sync completes successfully.
+
+    This function checks the sync status of a project using its ID. It will keep polling
+    until the status becomes 'successful', or until a maximum number of retries is reached.
+    Uses exponential backoff with jitter between retries.
 
     Args:
-        project_id: The ID of the project to check.
-        max_retries: The maximum number of times to retry checking the status.
-        initial_delay_seconds: The initial delay in seconds before the first retry.
-        max_delay_seconds: The maximum delay in seconds for exponential backoff.
-        timeout_seconds: The maximum time in seconds to wait for each HTTP request.
+        project_id (str): The numeric ID of the project to monitor.
+        max_retries (int): Maximum number of times to retry checking the status.
+        initial_delay (float): Delay in seconds before the first retry.
+        max_delay (float): Upper limit on delay between retries.
+        timeout (float): Timeout in seconds for each HTTP request.
 
     Raises:
-        RetryError: If the project does not sync successfully after max_retries.
-        HTTPError: If an HTTP error (4xx, 5xx) occurs that is not due to a timeout.
-        RequestException: For other network-related issues.
+        RetryError: If the project does not sync after all retries.
+        HTTPError: For non-retryable 4xx/5xx errors.
+        RequestException: For connection-related errors (e.g., network failures).
     """
     session = get_http_session()
-    project_endpoint = urllib.parse.urljoin(self.url, f"/api/controller/v2/projects/{project_id}")
-    current_delay = initial_delay_seconds
+    url = urllib.parse.urljoin(settings.url, f"/api/controller/v2/projects/{project_id}")
+    delay = initial_delay
 
     for attempt in range(1, max_retries + 1):
-        logger.debug(f"Attempting project sync check for project {project_id}, attempt #{attempt}")
-
         try:
-            r = session.get(project_endpoint, timeout=timeout_seconds)
-            r.raise_for_status()
-
-            response_data = r.json()
-            status = response_data.get("status")
-
+            response = session.get(url, timeout=timeout)
+            response.raise_for_status()
+            status = response.json().get("status")
             if status == "successful":
-                logger.info(f"Project {project_id} synced successfully after {attempt} attempts.")
-                return  # Success! Exit the function
+                logger.info(f"Project {project_id} synced successfully on attempt {attempt}.")
+                return
 
-            logger.info(f"Project {project_id} status is '{status}'. Will retry...")
+            logger.info(f"Project {project_id} status: '{status}'. Retrying...")
 
-        except Timeout as e:
-            logger.warning(f"Project sync check for {project_id} timed out on attempt #{attempt}: {e}")
         except HTTPError as e:
-            # 429 (Too Many Requests) or 408 (Request Timeout) might be retryable
-            if 400 <= e.response.status_code < 500 and e.response.status_code not in [408, 429]:
-                logger.error(f"Non-retryable HTTP client error ({e.response.status_code}) " f"during project sync for {project_id}: {e.response.text}")
-                raise  # Re-raise immediately if it's a non-transient
-            else:
-                logger.warning(f"Retrying on HTTP error ({e.response.status_code}) " f"for project {project_id} on attempt #{attempt}: {e.response.text}")
-        except RequestException as e:
-            # Catches connection errors, other requests-related issues
-            logger.warning(f"Network error during project sync for {project_id} on attempt #{attempt}: {e}")
-        except ValueError as e:
-            logger.error(f"Failed to decode JSON response for project {project_id} on attempt #{attempt}: {e}. Response: {r.text if r else 'N/A'}")
+            if e.response.status_code not in (408, 429) and 400 <= e.response.status_code < 500:
+                raise
+            logger.warning(f"Retryable HTTP error ({e.response.status_code}) on attempt {attempt}")
+        except (Timeout, RequestException) as e:
+            logger.warning(f"Network error on attempt {attempt}: {e}")
         except Exception as e:
-            logger.error(f"An unexpected error occurred during project sync for {project_id} on attempt #{attempt}: {type(e).__name__}: {e}")
+            logger.error(f"Unexpected error on attempt {attempt}: {e}")
 
-        # If we reach here, it means the sync was not successful or an error occurred.
-        # Check if this was the last attempt
         if attempt == max_retries:
-            final_msg = f"Project {project_id} has not synced successfully after {max_retries} attempts. " "Check logs for more information."
-            logger.error(final_msg)
-            raise RetryError(final_msg, request=r.request if r else None, response=r.response if r else None)
+            raise RetryError(f"Project {project_id} failed to sync after {max_retries} attempts.")
 
-        sleep_duration = min(current_delay, max_delay_seconds)
-        sleep_duration_with_jitter = random.uniform(sleep_duration * 0.8, sleep_duration * 1.2)
-
-        logger.debug(f"Waiting for {sleep_duration_with_jitter:.2f} seconds before next attempt...")
-        time.sleep(sleep_duration_with_jitter)
-
-        current_delay *= 2
+        jitter = random.uniform(0.8, 1.2)
+        sleep_time = min(delay * jitter, max_delay)
+        logger.debug(f"Waiting {sleep_time:.2f}s before retry #{attempt + 1}...")
+        time.sleep(sleep_time)
+        delay *= 2
 
 
 def get_http_session(force_refresh: bool = False) -> Session:
@@ -118,6 +108,29 @@ def get_http_session(force_refresh: bool = False) -> Session:
         session.headers.update({'Content-Type': 'application/json'})
         _aap_session = session
     return _aap_session
+
+
+def safe_json(func):
+    """
+    Decorator for functions that return a `requests.Response`.
+    It attempts to parse JSON safely and falls back to raw text if needed.
+    """
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        response = func(*args, **kwargs)
+        try:
+            return response.json()
+        except ValueError:
+            logger.warning(f"Non-JSON response from {response.url}: {response.text!r}")
+            return {
+                "detail": "Non-JSON response",
+                "text": response.text,
+                "status_code": response.status_code,
+                "url": response.url,
+            }
+
+    return wrapper
 
 
 def post(
@@ -148,19 +161,42 @@ def post(
     try:
         response = session.post(url, json=data)
         response.raise_for_status()
-        return response.json()
+
+        # Safely parse response JSON
+        return safe_json(lambda: response)()
+
     except requests.exceptions.HTTPError as exc:
         if exc.response.status_code != 400:
             raise
+
+        try:
+            error_json = safe_json(lambda: exc.response)()
+        except Exception:
+            error_json = {"detail": exc.response.text}
+
+        logger.warning(f"AAP POST {url} failed with 400. Error response: {error_json}")
+        logger.debug(f"Payload sent: {json.dumps(data, indent=2)}")
+
         logger.debug(f"AAP POST {url} returned 400. Attempting dedup lookup with keys {str(dedupe_keys)}")
+
+        # Attempt deduplication if resource already exists
         params = {k: data[k] for k in dedupe_keys if k in data}
-        lookup_resp = session.get(url, params=params)
-        lookup_resp.raise_for_status()
-        results = lookup_resp.json().get("results", [])
-        if not results:
-            raise
-        logger.debug(f"Resource with this name already exists. Retrieved resource: {results[0]}")
-        return results[0]
+        try:
+            lookup_resp = session.get(url, params=params)
+            lookup_resp.raise_for_status()
+            results = safe_json(lambda: lookup_resp)().get("results", [])
+
+            if results:
+                logger.debug(f"Resource already exists. Returning existing resource: {results[0]}")
+                return results[0]
+        except Exception as e:
+            logger.debug(f"Deduplication GET failed for {url} with params {params}: {e}")
+
+        # If dedupe fails or no match found, raise with full detail
+        raise requests.HTTPError(
+            f"400 Bad Request for {url}.\n" f"Payload: {json.dumps(data, indent=2)}\n" f"Response: {json.dumps(error_json, indent=2)}",
+            response=exc.response,
+        )
 
 
 def get(path: str, params: Optional[Dict] = None) -> requests.Response:
@@ -187,7 +223,7 @@ def create_project(instance: PatternInstance, pattern: Pattern, pattern_def: Dic
             "organization": instance.organization_id,
             "scm_type": "archive",
             "scm_url": pattern.collection_version_uri,
-            "credential": instance.credentials.get("project"),
+            "credential": instance.credentials.get("id"),
         }
     )
     logger.debug(f"Project definition: {project_def}")
@@ -273,7 +309,8 @@ def create_job_templates(instance: PatternInstance, pattern_def: Dict, project_i
 
         if survey:
             logger.debug(f"Adding survey to job template {jt_id}")
-            post(f"/api/controller/v2/job_templates/{jt_id}/survey_spec/", {"spec": survey})
+            # post(f"/api/controller/v2/job_templates/{jt_id}/survey_spec/", {"spec": survey})
+            post(f"/api/controller/v2/job_templates/{jt_id}/survey_spec/", survey)
 
         automations.append({"type": "job_template", "id": jt_id, "primary": primary})
 
@@ -287,7 +324,7 @@ def assign_execute_roles(executors: Dict[str, List[Any]], automations: List[Dict
         executors: Dictionary with "teams" and "users" lists.
         automations: List of job template metadata.
     """
-    if not executors["teams"] and not executors["users"]:
+    if not executors or (not executors["teams"] and not executors["users"]):
         return
 
     # Get role ID for "Execute" on JobTemplate
