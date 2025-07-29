@@ -33,7 +33,9 @@ class PatternViewSet(CoreViewSet, ModelViewSet):
         serializer.is_valid(raise_exception=True)
         pattern = serializer.save()
 
-        task = Task.objects.create(status="Initiated", details={"model": "Pattern", "id": pattern.id})
+        task = Task.objects.create(
+            status="Initiated", details={"model": "Pattern", "id": pattern.id}
+        )
 
         run_pattern_task(pattern.id, task.id)
 
@@ -72,7 +74,6 @@ class PatternInstanceViewSet(CoreViewSet, ModelViewSet):
             status="Initiated", details={"model": "PatternInstance", "id": instance.id}
         )
 
-        # Schedule async background task to enrich this instance
         run_pattern_instance_task(instance.id, task.id)
 
         headers = self.get_success_headers(serializer.data)

@@ -7,7 +7,10 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Load defaults first, then override with .env or environment variables
 settings = Dynaconf(
-    settings_files=[os.path.join(BASE_DIR, "defaults.py"), os.path.join(BASE_DIR, "..", ".env")],  # defaults, then env overrides
+    settings_files=[
+        os.path.join(BASE_DIR, "defaults.py"),
+        os.path.join(BASE_DIR, "..", ".env"),
+    ],  # defaults, then env overrides
     envvar_prefix="AAP",
     envvar_cast=True,
     load_dotenv=True,
@@ -24,7 +27,7 @@ def validate_url(url: str) -> str:
 
 
 class AAPSettings:
-    def __init__(self):
+    def __init__(self) -> None:
         raw_url = settings.get("URL")  # Changed from "INTERNAL_URL" to "URL"
         if not raw_url:
             raise ValueError("AAP_URL is required")

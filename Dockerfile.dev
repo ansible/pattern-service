@@ -14,6 +14,8 @@ ADD pattern_service /app/pattern_service
 
 COPY manage.py .
 
+ENV PATTERN_SERVICE_MODE=development
+
 EXPOSE 5000
 
 ENV SQLITE_PATH=/tmp/db.sqlite3

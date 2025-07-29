@@ -28,7 +28,7 @@ from core.models import Task
 logger = logging.getLogger(__name__)
 
 
-def update_task_status(task: Task, status_: str, details: dict):
+def update_task_status(task: Task, status_: str, details: dict) -> None:
     """
     Updates the status and details of a Task object.
     """
@@ -49,10 +49,13 @@ def download_collection(collection: str, version: str) -> Iterator[str]:
     Yields:
         The path to the extracted collection files.
     """
-    path = f"/api/galaxy/v3/plugin/ansible/content/published/collections/artifacts/{collection}-{version}.tar.gz"
+    filename = f"{collection}-{version}.tar.gz"
+    base = "/api/galaxy/v3/plugin/ansible/content/published/collections/artifacts"
+    path = f"{base}/{filename}"
     temp_base_dir = tempfile.mkdtemp()
     collection_path = os.path.join(temp_base_dir, f"{collection}-{version}")
     os.makedirs(collection_path, exist_ok=True)
+
     try:
         response = get(path)
         in_memory_tar = io.BytesIO(response.content)
@@ -63,7 +66,13 @@ def download_collection(collection: str, version: str) -> Iterator[str]:
         shutil.rmtree(temp_base_dir)
 
 
-def save_instance_state(instance: PatternInstance, project_id: int, ee_id: int, labels: List[ControllerLabel], automations: List[Dict[str, Any]]) -> None:
+def save_instance_state(
+    instance: PatternInstance,
+    project_id: int,
+    ee_id: int,
+    labels: List[ControllerLabel],
+    automations: List[Dict[str, Any]],
+) -> None:
     """
     Saves the instance and links labels and automations inside a DB transaction.
     Args:
@@ -87,7 +96,7 @@ def save_instance_state(instance: PatternInstance, project_id: int, ee_id: int, 
             )
 
 
-def pattern_task(pattern_id: int, task_id: int):
+def pattern_task(pattern_id: int, task_id: int) -> None:
     """
     Orchestrates downloading a collection and saving a pattern definition.
     """
@@ -97,15 +106,28 @@ def pattern_task(pattern_id: int, task_id: int):
         pattern = Pattern.objects.get(id=pattern_id)
         update_task_status(task, "Running", {"info": "Processing pattern"})
         collection_name: str = pattern.collection_name.replace(".", "-")
-        with download_collection(collection_name, pattern.collection_version) as collection_path:
-            path_to_definition = os.path.join(collection_path, "extensions", "patterns", pattern.pattern_name, "meta", "pattern.json")
+        with download_collection(
+            collection_name, pattern.collection_version
+        ) as collection_path:
+            path_to_definition = os.path.join(
+                collection_path,
+                "extensions",
+                "patterns",
+                pattern.pattern_name,
+                "meta",
+                "pattern.json",
+            )
             with open(path_to_definition, "r") as file:
                 definition = json.load(file)
 
             pattern.pattern_definition = definition
-            pattern.collection_version_uri = build_collection_uri(collection_name, pattern.collection_version)
+            pattern.collection_version_uri = build_collection_uri(
+                collection_name, pattern.collection_version
+            )
             pattern.save(update_fields=["pattern_definition", "collection_version_uri"])
-        update_task_status(task, "Completed", {"info": "Pattern processed successfully"})
+        update_task_status(
+            task, "Completed", {"info": "Pattern processed successfully"}
+        )
     except FileNotFoundError:
         logger.error(f"Could not find pattern definition for task {task_id}")
         update_task_status(task, "Failed", {"error": "Pattern definition not found."})
@@ -114,7 +136,7 @@ def pattern_task(pattern_id: int, task_id: int):
         update_task_status(task, "Failed", {"error": str(e)})
 
 
-def pattern_instance_task(instance_id: int, task_id: int):
+def pattern_instance_task(instance_id: int, task_id: int) -> None:
     task = Task.objects.get(id=task_id)
     try:
         instance = PatternInstance.objects.select_related("pattern").get(id=instance_id)

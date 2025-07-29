@@ -5,10 +5,12 @@ import time
 import urllib.parse
 from functools import wraps
 from typing import Any
+from typing import Callable
 from typing import Dict
 from typing import List
 from typing import Optional
 from typing import Sequence
+from typing import TypeVar
 
 import requests
 from requests import Session
@@ -29,28 +31,44 @@ _aap_session: Optional[Session] = None
 
 settings = get_aap_settings()
 
+F = TypeVar("F", bound=Callable[..., requests.Response])
+
 
 class RetryError(Exception):
     """Custom exception raised when a retry limit is reached."""
 
-    def __init__(self, msg: str, request=None, response=None):
+    def __init__(
+        self, msg: str, request: Optional[Any] = None, response: Optional[Any] = None
+    ) -> None:
         super().__init__(msg)
         self.request = request
         self.response = response
 
 
 def build_collection_uri(collection: str, version: str) -> str:
+    """Builds the URI for a given collection and version."""
+    base_url = settings.url
+    path = "/api/galaxy/v3/plugin/ansible/content/published/collections/artifacts"
     filename = f"{collection}-{version}.tar.gz"
-    return f"{settings.url}/api/galaxy/v3/plugin/ansible/content/published/collections/artifacts/{filename}"
+
+    return f"{base_url}{path}/{filename}"
 
 
-def wait_for_project_sync(project_id: str, *, max_retries: int = 15, initial_delay: float = 1, max_delay: float = 60, timeout: float = 30) -> None:
+def wait_for_project_sync(
+    project_id: str,
+    *,
+    max_retries: int = 15,
+    initial_delay: float = 1,
+    max_delay: float = 60,
+    timeout: float = 30,
+) -> None:
     """
-    Polls the AAP Controller project endpoint until the project sync completes successfully.
+    Polls the AAP Controller project endpoint until the project sync completes
+    successfully.
 
-    This function checks the sync status of a project using its ID. It will keep polling
-    until the status becomes 'successful', or until a maximum number of retries is reached.
-    Uses exponential backoff with jitter between retries.
+    This function checks the sync status of a project using its ID. It will keep
+    polling until the status becomes 'successful', or until a maximum number of
+    retries is reached. Uses exponential backoff with jitter between retries.
 
     Args:
         project_id (str): The numeric ID of the project to monitor.
@@ -65,7 +83,9 @@ def wait_for_project_sync(project_id: str, *, max_retries: int = 15, initial_del
         RequestException: For connection-related errors (e.g., network failures).
     """
     session = get_http_session()
-    url = urllib.parse.urljoin(settings.url, f"/api/controller/v2/projects/{project_id}")
+    url = urllib.parse.urljoin(
+        settings.url, f"/api/controller/v2/projects/{project_id}"
+    )
     delay = initial_delay
 
     for attempt in range(1, max_retries + 1):
@@ -74,22 +94,31 @@ def wait_for_project_sync(project_id: str, *, max_retries: int = 15, initial_del
             response.raise_for_status()
             status = response.json().get("status")
             if status == "successful":
-                logger.info(f"Project {project_id} synced successfully on attempt {attempt}.")
+                logger.info(
+                    f"Project {project_id} synced successfully on attempt {attempt}."
+                )
                 return
 
             logger.info(f"Project {project_id} status: '{status}'. Retrying...")
 
         except HTTPError as e:
-            if e.response.status_code not in (408, 429) and 400 <= e.response.status_code < 500:
+            if (
+                e.response.status_code not in (408, 429)
+                and 400 <= e.response.status_code < 500
+            ):
                 raise
-            logger.warning(f"Retryable HTTP error ({e.response.status_code}) on attempt {attempt}")
+            logger.warning(
+                f"Retryable HTTP error ({e.response.status_code}) on attempt {attempt}"
+            )
         except (Timeout, RequestException) as e:
             logger.warning(f"Network error on attempt {attempt}: {e}")
         except Exception as e:
             logger.error(f"Unexpected error on attempt {attempt}: {e}")
 
         if attempt == max_retries:
-            raise RetryError(f"Project {project_id} failed to sync after {max_retries} attempts.")
+            raise RetryError(
+                f"Project {project_id} failed to sync after {max_retries} attempts."
+            )
 
         jitter = random.uniform(0.8, 1.2)
         sleep_time = min(delay * jitter, max_delay)
@@ -105,19 +134,19 @@ def get_http_session(force_refresh: bool = False) -> Session:
         session = Session()
         session.auth = HTTPBasicAuth(settings.username, settings.password)
         session.verify = settings.verify_ssl
-        session.headers.update({'Content-Type': 'application/json'})
+        session.headers.update({"Content-Type": "application/json"})
         _aap_session = session
     return _aap_session
 
 
-def safe_json(func):
+def safe_json(func: F) -> Callable[..., dict[str, Any]]:
     """
     Decorator for functions that return a `requests.Response`.
     It attempts to parse JSON safely and falls back to raw text if needed.
     """
 
     @wraps(func)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: Any, **kwargs: Any) -> dict[str, Any]:
         response = func(*args, **kwargs)
         try:
             return response.json()
@@ -138,7 +167,7 @@ def post(
     data: Dict,
     *,
     dedupe_keys: Sequence[str] = ("name", "organization"),
-) -> Dict:
+) -> Dict[str, Any]:
     """
     Create a resource on the AAP controller.
     If the POST fails with 400 because the object already exists,
@@ -166,18 +195,18 @@ def post(
         return safe_json(lambda: response)()
 
     except requests.exceptions.HTTPError as exc:
-        if exc.response.status_code != 400:
+        response = exc.response
+        if response.status_code != 400:
             raise
 
         try:
-            error_json = safe_json(lambda: exc.response)()
+            error_json = safe_json(lambda: response)()
         except Exception:
-            error_json = {"detail": exc.response.text}
+            error_json = {"detail": response.text}
 
         logger.warning(f"AAP POST {url} failed with 400. Error response: {error_json}")
         logger.debug(f"Payload sent: {json.dumps(data, indent=2)}")
-
-        logger.debug(f"AAP POST {url} returned 400. Attempting dedup lookup with keys {str(dedupe_keys)}")
+        logger.debug(f"AAP POST {url} 400; dedup lookup keys: {dedupe_keys}")
 
         # Attempt deduplication if resource already exists
         params = {k: data[k] for k in dedupe_keys if k in data}
@@ -187,15 +216,21 @@ def post(
             results = safe_json(lambda: lookup_resp)().get("results", [])
 
             if results:
-                logger.debug(f"Resource already exists. Returning existing resource: {results[0]}")
+                logger.debug(
+                    f"Resource already exists. Returning existing resource: {results[0]}"
+                )
                 return results[0]
         except Exception as e:
-            logger.debug(f"Deduplication GET failed for {url} with params {params}: {e}")
+            logger.debug(
+                f"Deduplication GET failed for {url} with params {params}: {e}"
+            )
 
         # If dedupe fails or no match found, raise with full detail
         raise requests.HTTPError(
-            f"400 Bad Request for {url}.\n" f"Payload: {json.dumps(data, indent=2)}\n" f"Response: {json.dumps(error_json, indent=2)}",
-            response=exc.response,
+            f"400 Bad Request for {url}.\n"
+            f"Payload: {json.dumps(data, indent=2)}\n"
+            f"Response: {json.dumps(error_json, indent=2)}",
+            response=response,
         )
 
 
@@ -207,7 +242,9 @@ def get(path: str, params: Optional[Dict] = None) -> requests.Response:
     return response
 
 
-def create_project(instance: PatternInstance, pattern: Pattern, pattern_def: Dict) -> int:
+def create_project(
+    instance: PatternInstance, pattern: Pattern, pattern_def: Dict
+) -> int:
     """
     Creates a controller project on AAP using the pattern definition.
     Args:
@@ -255,7 +292,9 @@ def create_execution_environment(instance: PatternInstance, pattern_def: Dict) -
     return post("/api/controller/v2/execution_environments/", ee_def)["id"]
 
 
-def create_labels(instance: PatternInstance, pattern_def: Dict) -> List[ControllerLabel]:
+def create_labels(
+    instance: PatternInstance, pattern_def: Dict
+) -> List[ControllerLabel]:
     """
     Creates controller labels and returns model instances.
     Args:
@@ -276,7 +315,9 @@ def create_labels(instance: PatternInstance, pattern_def: Dict) -> List[Controll
     return labels
 
 
-def create_job_templates(instance: PatternInstance, pattern_def: Dict, project_id: int, ee_id: int) -> List[Dict[str, Any]]:
+def create_job_templates(
+    instance: PatternInstance, pattern_def: Dict, project_id: int, ee_id: int
+) -> List[Dict[str, Any]]:
     """
     Creates job templates and associated surveys.
     Args:
@@ -299,7 +340,9 @@ def create_job_templates(instance: PatternInstance, pattern_def: Dict, project_i
             "organization": instance.organization_id,
             "project": project_id,
             "execution_environment": ee_id,
-            "playbook": f"extensions/patterns/{pattern_def['name']}/playbooks/{jt['playbook']}",
+            "playbook": (
+                f"extensions/patterns/{pattern_def['name']}/playbooks/{jt['playbook']}"
+            ),
             "ask_inventory_on_launch": True,
         }
 
@@ -309,7 +352,6 @@ def create_job_templates(instance: PatternInstance, pattern_def: Dict, project_i
 
         if survey:
             logger.debug(f"Adding survey to job template {jt_id}")
-            # post(f"/api/controller/v2/job_templates/{jt_id}/survey_spec/", {"spec": survey})
             post(f"/api/controller/v2/job_templates/{jt_id}/survey_spec/", survey)
 
         automations.append({"type": "job_template", "id": jt_id, "primary": primary})
@@ -317,7 +359,9 @@ def create_job_templates(instance: PatternInstance, pattern_def: Dict, project_i
     return automations
 
 
-def assign_execute_roles(executors: Dict[str, List[Any]], automations: List[Dict[str, Any]]) -> None:
+def assign_execute_roles(
+    executors: Dict[str, List[Any]], automations: List[Dict[str, Any]]
+) -> None:
     """
     Assigns JobTemplate Execute role to teams and users.
     Args:
@@ -328,7 +372,10 @@ def assign_execute_roles(executors: Dict[str, List[Any]], automations: List[Dict
         return
 
     # Get role ID for "Execute" on JobTemplate
-    result = get("/api/controller/v2/roles/", params={"name": "Execute", "content_type": "job_template"})
+    result = get(
+        "/api/controller/v2/roles/",
+        params={"name": "Execute", "content_type": "job_template"},
+    )
     roles_resp = result.json()
     if not roles_resp["results"]:
         raise ValueError("Could not find 'JobTemplate Execute' role.")

@@ -36,8 +36,17 @@ class SharedDataMixin:
                 "description": "This pattern provisions a demo resource using AAP.",
                 "short_description": "Provision demo resource",
                 "aap_resources": {
-                    "controller_project": {"name": "Demo Project", "description": "A demo project for testing"},
-                    "controller_job_templates": [{"name": "Run demo job", "description": "Runs the demo automation", "playbook": "main.yml"}],
+                    "controller_project": {
+                        "name": "Demo Project",
+                        "description": "A demo project for testing",
+                    },
+                    "controller_job_templates": [
+                        {
+                            "name": "Run demo job",
+                            "description": "Runs the demo automation",
+                            "playbook": "main.yml",
+                        }
+                    ],
                 },
             },
         )
@@ -74,7 +83,9 @@ class SharedDataMixin:
         self.register_temp_dir(temp_dir)
 
         collection_path = os.path.join(temp_dir, "mynamespace-mycollection-1.0.0")
-        pattern_dir = os.path.join(collection_path, "extensions", "patterns", "example_pattern", "meta")
+        pattern_dir = os.path.join(
+            collection_path, "extensions", "patterns", "example_pattern", "meta"
+        )
         os.makedirs(pattern_dir, exist_ok=True)
 
         with open(os.path.join(pattern_dir, "pattern.json"), "w") as f:
@@ -92,10 +103,15 @@ class SharedDataMixin:
 
 
 class PatternTaskTest(SharedDataMixin, APITestCase):
-    @patch("core.services.update_task_status", wraps=pattern_task.__globals__["update_task_status"])
+    @patch(
+        "core.services.update_task_status",
+        wraps=pattern_task.__globals__["update_task_status"],
+    )
     @patch("core.services.open", new_callable=mock_open, read_data='{"name": "test"}')
     @patch("core.services.download_collection")
-    def test_run_pattern_task_success(self, mock_download, mock_open_fn, mock_update_status):
+    def test_run_pattern_task_success(
+        self, mock_download, mock_open_fn, mock_update_status
+    ):
         pattern = Pattern.objects.create(
             collection_name="demo.collection",
             collection_version="1.0.0",
@@ -105,16 +121,35 @@ class PatternTaskTest(SharedDataMixin, APITestCase):
         temp_dir = tempfile.mkdtemp()
         mock_download.return_value.__enter__.return_value = temp_dir
 
-        os.makedirs(os.path.join(temp_dir, "extensions", "patterns", "test_pattern", "meta"))
-        with open(os.path.join(temp_dir, "extensions", "patterns", "test_pattern", "meta", "pattern.json"), "w") as f:
+        os.makedirs(
+            os.path.join(temp_dir, "extensions", "patterns", "test_pattern", "meta")
+        )
+        with open(
+            os.path.join(
+                temp_dir,
+                "extensions",
+                "patterns",
+                "test_pattern",
+                "meta",
+                "pattern.json",
+            ),
+            "w",
+        ) as f:
             f.write(json.dumps({"name": "test"}))
 
         pattern_task(pattern.id, task.id)
 
-        mock_update_status.assert_any_call(task, "Running", {"info": "Processing pattern"})
-        mock_update_status.assert_any_call(task, "Completed", {"info": "Pattern processed successfully"})
+        mock_update_status.assert_any_call(
+            task, "Running", {"info": "Processing pattern"}
+        )
+        mock_update_status.assert_any_call(
+            task, "Completed", {"info": "Pattern processed successfully"}
+        )
 
-    @patch("core.services.update_task_status", wraps=pattern_task.__globals__["update_task_status"])
+    @patch(
+        "core.services.update_task_status",
+        wraps=pattern_task.__globals__["update_task_status"],
+    )
     @patch("core.services.download_collection", side_effect=FileNotFoundError)
     def test_run_pattern_task_file_not_found(self, mock_download, mock_update_status):
         pattern = Pattern.objects.create(
@@ -126,16 +161,23 @@ class PatternTaskTest(SharedDataMixin, APITestCase):
 
         pattern_task(pattern.id, task.id)
 
-        mock_update_status.assert_called_with(task, "Failed", {"error": "Pattern definition not found."})
+        mock_update_status.assert_called_with(
+            task, "Failed", {"error": "Pattern definition not found."}
+        )
 
-    @patch("core.services.download_collection", side_effect=Exception("Download failed"))
+    @patch(
+        "core.services.download_collection", side_effect=Exception("Download failed")
+    )
     def test_run_pattern_task_handles_download_failure(self, mock_download):
         pattern_task(self.pattern.id, self.task.id)
         self.task.refresh_from_db()
         self.assertEqual(self.task.status, "Failed")
         self.assertIn("Download failed", self.task.details.get("error", ""))
 
-    @patch("core.services.update_task_status", wraps=pattern_task.__globals__["update_task_status"])
+    @patch(
+        "core.services.update_task_status",
+        wraps=pattern_task.__globals__["update_task_status"],
+    )
     @patch("core.services.download_collection")
     def test_full_status_update_flow(self, mock_download, mock_update_status):
         temp_dir_path = self.create_temp_collection_dir()
@@ -156,7 +198,9 @@ class PatternTaskTest(SharedDataMixin, APITestCase):
         # Verify final DB state
         self.task.refresh_from_db()
         self.assertEqual(self.task.status, "Completed")
-        self.assertEqual(self.task.details.get("info"), "Pattern processed successfully")
+        self.assertEqual(
+            self.task.details.get("info"), "Pattern processed successfully"
+        )
 
         # Verify pattern_definition was updated and saved
         self.pattern.refresh_from_db()
@@ -191,7 +235,9 @@ class PatternInstanceTaskTest(SharedDataMixin, TestCase):
             task_id=self.task.id,
         )
 
-        mock_create_project.assert_called_once_with(self.pattern_instance, self.pattern, self.pattern.pattern_definition)
+        mock_create_project.assert_called_once_with(
+            self.pattern_instance, self.pattern, self.pattern.pattern_definition
+        )
         mock_assign_roles.assert_called_once()
 
         # Ensure task marked Completed

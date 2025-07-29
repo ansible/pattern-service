@@ -57,8 +57,13 @@ class SharedDataMixin:
 class PatternViewSetTest(SharedDataMixin, APITestCase):
     def create_temp_collection_dir(self):
         temp_dir = tempfile.mkdtemp()
-        os.makedirs(os.path.join(temp_dir, "extensions", "patterns", "new_pattern", "meta"), exist_ok=True)
-        pattern_json_path = os.path.join(temp_dir, "extensions", "patterns", "new_pattern", "meta", "pattern.json")
+        os.makedirs(
+            os.path.join(temp_dir, "extensions", "patterns", "new_pattern", "meta"),
+            exist_ok=True,
+        )
+        pattern_json_path = os.path.join(
+            temp_dir, "extensions", "patterns", "new_pattern", "meta", "pattern.json"
+        )
         with open(pattern_json_path, "w") as f:
             json.dump({"mock_key": "mock_value"}, f)
         self.addCleanup(lambda: shutil.rmtree(temp_dir, ignore_errors=True))
@@ -170,7 +175,7 @@ class ControllerLabelViewSetTest(SharedDataMixin, APITestCase):
 class PatternInstanceViewSetTest(SharedDataMixin, APITestCase):
     def setUp(self):
         self.factory = APIRequestFactory()
-        self.view = PatternInstanceViewSet.as_view({'post': 'create'})
+        self.view = PatternInstanceViewSet.as_view({"post": "create"})
 
         self.another_pattern = Pattern.objects.create(
             collection_name="another.collection",
@@ -201,17 +206,19 @@ class PatternInstanceViewSetTest(SharedDataMixin, APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
 
-    @patch('core.views.run_pattern_instance_task')
+    @patch("core.views.run_pattern_instance_task")
     def test_create_pattern_instance_and_task(self, mock_run_task):
-        request = self.factory.post('/patterninstances/', self.valid_payload, format='json')
+        request = self.factory.post(
+            "/patterninstances/", self.valid_payload, format="json"
+        )
         response = self.view(request)
 
         # Assert response status is 202
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
 
         # Assert response contains task_id and message
-        self.assertIn('task_id', response.data)
-        self.assertIn('message', response.data)
+        self.assertIn("task_id", response.data)
+        self.assertIn("message", response.data)
 
         # Check that a PatternInstance was created
         instance = PatternInstance.objects.last()
