@@ -75,9 +75,9 @@ db_path.parent.mkdir(parents=True, exist_ok=True)
 
 # Database configuration
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': str(db_path),
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": str(db_path),
     }
 }
 

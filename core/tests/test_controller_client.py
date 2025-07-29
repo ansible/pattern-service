@@ -1,5 +1,6 @@
 import core.controller_client as cc
 
+
 def test_get_http_session_caches():
     """Subsequent calls without force_refresh must return the *same* object."""
     s1 = cc.get_http_session()

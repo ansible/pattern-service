@@ -1,6 +1,5 @@
 import logging
 from typing import Dict
-from typing import Iterator
 from typing import Optional
 
 import requests
@@ -23,7 +22,7 @@ def get_http_session(force_refresh: bool = False) -> Session:
         session = Session()
         session.auth = HTTPBasicAuth(settings.username, settings.password)
         session.verify = settings.verify_ssl
-        session.headers.update({'Content-Type': 'application/json'})
+        session.headers.update({"Content-Type": "application/json"})
         _aap_session = session
 
     return _aap_session
@@ -39,5 +38,9 @@ def get(path: str, *, params: Optional[Dict] = None) -> requests.Response:
 
 
 def build_collection_uri(collection: str, version: str) -> str:
+    """Builds the URI for a given collection and version."""
+    base_url = settings.url
+    path = "/api/galaxy/v3/plugin/ansible/content/published/collections/artifacts"
     filename = f"{collection}-{version}.tar.gz"
-    return f"{settings.url}/api/galaxy/v3/plugin/ansible/content/published/collections/artifacts/{filename}"
+
+    return f"{base_url}{path}/{filename}"

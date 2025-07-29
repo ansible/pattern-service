@@ -55,8 +55,13 @@ class SharedDataMixin:
 class PatternViewSetTest(SharedDataMixin, APITestCase):
     def create_temp_collection_dir(self):
         temp_dir = tempfile.mkdtemp()
-        os.makedirs(os.path.join(temp_dir, "extensions", "patterns", "new_pattern", "meta"), exist_ok=True)
-        pattern_json_path = os.path.join(temp_dir, "extensions", "patterns", "new_pattern", "meta", "pattern.json")
+        os.makedirs(
+            os.path.join(temp_dir, "extensions", "patterns", "new_pattern", "meta"),
+            exist_ok=True,
+        )
+        pattern_json_path = os.path.join(
+            temp_dir, "extensions", "patterns", "new_pattern", "meta", "pattern.json"
+        )
         with open(pattern_json_path, "w") as f:
             json.dump({"mock_key": "mock_value"}, f)
         self.addCleanup(lambda: shutil.rmtree(temp_dir, ignore_errors=True))

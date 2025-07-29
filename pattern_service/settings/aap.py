@@ -6,7 +6,10 @@ from dynaconf import Dynaconf
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 settings = Dynaconf(
-    settings_files=[os.path.join(BASE_DIR, "defaults.py"), os.path.join(BASE_DIR, "..", ".env")],
+    settings_files=[
+        os.path.join(BASE_DIR, "defaults.py"),
+        os.path.join(BASE_DIR, "..", ".env"),
+    ],
     envvar_prefix="AAP",
     envvar_cast=True,
     load_dotenv=True,
@@ -23,7 +26,7 @@ def validate_url(url: str) -> str:
 
 
 class AAPSettings:
-    def __init__(self):
+    def __init__(self) -> None:
         raw_url = settings.get("URL")  # Changed from "INTERNAL_URL" to "URL"
         if not raw_url:
             raise ValueError("AAP_URL is required")
