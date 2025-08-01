@@ -1,5 +1,12 @@
+import json
+import os
+import shutil
+import tempfile
+from unittest.mock import patch
+
 from django.urls import reverse
 from rest_framework import status
+from rest_framework.test import APIRequestFactory
 from rest_framework.test import APITestCase
 
 from core.models import Automation
@@ -7,6 +14,7 @@ from core.models import ControllerLabel
 from core.models import Pattern
 from core.models import PatternInstance
 from core.models import Task
+from core.views import PatternInstanceViewSet
 
 
 class SharedDataMixin:
@@ -47,6 +55,20 @@ class SharedDataMixin:
 
 
 class PatternViewSetTest(SharedDataMixin, APITestCase):
+    def create_temp_collection_dir(self):
+        temp_dir = tempfile.mkdtemp()
+        os.makedirs(
+            os.path.join(temp_dir, "extensions", "patterns", "new_pattern", "meta"),
+            exist_ok=True,
+        )
+        pattern_json_path = os.path.join(
+            temp_dir, "extensions", "patterns", "new_pattern", "meta", "pattern.json"
+        )
+        with open(pattern_json_path, "w") as f:
+            json.dump({"mock_key": "mock_value"}, f)
+        self.addCleanup(lambda: shutil.rmtree(temp_dir, ignore_errors=True))
+        return temp_dir
+
     def test_pattern_list_view(self):
         url = reverse("pattern-list")
         response = self.client.get(url)
@@ -60,10 +82,14 @@ class PatternViewSetTest(SharedDataMixin, APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["collection_name"], "mynamespace.mycollection")
 
-    def test_pattern_create_view(self):
+    @patch("core.services.download_collection")
+    def test_pattern_create_view(self, mock_download_collection):
+        temp_dir = self.create_temp_collection_dir()  # Simulate a valid pattern.json
+        mock_download_collection.return_value.__enter__.return_value = temp_dir
+
         url = reverse("pattern-list")
         data = {
-            "collection_name": "new.namespace.collection",
+            "collection_name": "newnamespace.collection",
             "collection_version": "1.2.3",
             "collection_version_uri": "https://example.com/new.tar.gz",
             "pattern_name": "new_pattern",
@@ -82,9 +108,8 @@ class PatternViewSetTest(SharedDataMixin, APITestCase):
 
         # Task exists
         task = Task.objects.get(id=task_id)
-        self.assertEqual(task.status, "Initiated")
-        self.assertEqual(task.details.get("model"), "Pattern")
-        self.assertEqual(task.details.get("id"), pattern.id)
+        self.assertEqual(task.status, "Completed")
+        self.assertEqual(task.details.get("info"), "Pattern processed successfully")
 
     def test_pattern_delete_view(self):
         # Create a separate pattern for deletion
@@ -148,11 +173,26 @@ class ControllerLabelViewSetTest(SharedDataMixin, APITestCase):
 
 
 class PatternInstanceViewSetTest(SharedDataMixin, APITestCase):
-    def test_pattern_instance_list_view(self):
-        url = reverse("patterninstance-list")
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
+    def setUp(self):
+        self.factory = APIRequestFactory()
+        self.view = PatternInstanceViewSet.as_view({"post": "create"})
+
+        self.another_pattern = Pattern.objects.create(
+            collection_name="another.collection",
+            collection_version="1.0.1",
+            collection_version_uri="https://example.com/another/collection/",
+            pattern_name="another_pattern",
+            pattern_definition={"key": "value2"},
+        )
+
+        self.valid_payload = {
+            "organization_id": 1,
+            "controller_project_id": 123,
+            "controller_ee_id": 456,
+            "credentials": {"user": "admin"},
+            "executors": [{"executor_type": "container"}],
+            "pattern": self.another_pattern.id,
+        }
 
     def test_pattern_instance_detail_view(self):
         url = reverse("patterninstance-detail", args=[self.pattern_instance.pk])
@@ -160,36 +200,38 @@ class PatternInstanceViewSetTest(SharedDataMixin, APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["organization_id"], 1)
 
-    def test_pattern_instance_create_view(self):
+    def test_pattern_instance_list_view(self):
         url = reverse("patterninstance-list")
-        data = {
-            "organization_id": 2,
-            "controller_project_id": 0,
-            "controller_ee_id": 0,
-            "credentials": {"user": "tester"},
-            "executors": [],
-            "pattern": self.pattern.id,
-        }
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
 
-        response = self.client.post(url, data, format="json")
+    @patch("core.views.run_pattern_instance_task")
+    def test_create_pattern_instance_and_task(self, mock_run_task):
+        request = self.factory.post(
+            "/patterninstances/", self.valid_payload, format="json"
+        )
+        response = self.view(request)
+
+        # Assert response status is 202
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
 
-        # PatternInstance created - verify it exists
-        instance = PatternInstance.objects.get(organization_id=2)
-        self.assertIsNotNone(instance)
-        # Verify the fields were saved correctly
-        self.assertEqual(instance.organization_id, 2)
-        self.assertEqual(instance.credentials["user"], "tester")
+        # Assert response contains task_id and message
+        self.assertIn("task_id", response.data)
+        self.assertIn("message", response.data)
 
-        # Task id returned directly
-        task_id = response.data.get("task_id")
-        self.assertIsInstance(task_id, int)
+        # Check that a PatternInstance was created
+        instance = PatternInstance.objects.last()
 
-        # Task exists
-        task = Task.objects.get(id=task_id)
+        # Check that a Task was created
+        task = Task.objects.last()
+        self.assertIsNotNone(task)
         self.assertEqual(task.status, "Initiated")
         self.assertEqual(task.details.get("model"), "PatternInstance")
         self.assertEqual(task.details.get("id"), instance.id)
+
+        # Assert the background task was scheduled with correct args
+        mock_run_task.assert_called_once_with(instance.id, task.id)
 
     def test_pattern_instance_delete_view(self):
         # Create a separate instance for deletion
