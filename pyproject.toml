@@ -16,6 +16,8 @@ license-files = ["LICENSE.md"]
 requires-python = ">=3.11,<3.14"
 dependencies = [
     "django-ansible-base==2025.5.8",
+    "dispatcherd",
+    "psycopg",
 ]
 
 [project.urls]
@@ -30,6 +32,7 @@ Repository = "https://github.com/ansible/pattern-service"
 dev = [
     "pip-tools>=7.4,<8.0",
     "python-dotenv>=1.1.1,<2.0",
+    "psycopg-binary==3.2.9",
 ]
 test = [
     "black>=24.0,<25.0",
@@ -72,7 +75,7 @@ disallow_subclassing_any = false
 disallow_untyped_decorators = false
 
 [[tool.mypy.overrides]]
-module = ["ansible_base.*", "dotenv.*"]
+module = ["ansible_base.*", "dotenv.*", "dispatcherd.*", "dynaconf.*"]
 ignore_missing_imports = true
 
 
@@ -82,7 +85,7 @@ ignore_missing_imports = true
 
 [tool.tox]
 requires = ["tox>=4.26"]
-env_list = ["check", "format", "lint", "test", "type"]
+env_list = ["check", "format", "lint", "type"]
 
 [tool.tox.env_run_base]
 package = "wheel"

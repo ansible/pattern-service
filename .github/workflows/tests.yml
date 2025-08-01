@@ -17,6 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DJANGO_SETTINGS_MODULE: pattern_service.settings
+      COMPOSE_COMMAND: docker compose
 
     steps:
       - name: Checkout code
@@ -32,5 +33,8 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install tox
 
+      - name: Set up Docker Compose
+        uses: docker/setup-compose-action@v1
+
       - name: Run unit tests
-        run: tox -e test
+        run: make test

@@ -108,3 +108,28 @@ DATABASES = {
         "NAME": BASE_DIR / "db.sqlite3",
     }
 }
+
+DISPATCHER_CONFIG = {
+    "version": 2,
+    "service": {
+        "main_kwargs": {"node_id": "pattern-service-a"},
+        "process_manager_kwargs": {
+            "preload_modules": ["pattern_service.core.tasks.hazmat"]
+        },
+    },
+    "brokers": {
+        "pg_notify": {
+            "config": {
+                "conninfo": (
+                    "dbname=pattern_db user=pattern password=pattern123 "
+                    "host=postgres port=5432 application_name=dispatcher_pattern_service"
+                )
+            },
+            "sync_connection_factory": "dispatcherd.brokers.pg_notify.connection_saver",
+            "channels": ["pattern-service-tasks"],
+            "default_publish_channel": "pattern-service-tasks",
+        },
+        "socket": {"socket_path": "pattern_service_dispatcher.sock"},
+    },
+    "publish": {"default_control_broker": "socket", "default_broker": "pg_notify"},
+}

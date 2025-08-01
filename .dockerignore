@@ -1,0 +1,83 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.bak
+*.swo
+
+# Gitignore and other version control files
+.git/
+.gitignore
+.gitmodules
+
+# Environment variables
+.env
+.env.*
+*.env
+
+# Logs and temporary files
+*.log
+tmp/
+temp/
+
+# Database files
+*.sqlite3
+*.db
+
+# Testing
+.cache
+.coverage
+.tox
+coverage.xml
+htmlcov
+pep8.txt
+scratch
+testem.log
+.pytest_cache/
+
+# Mac OS X
+*.DS_Store
+
+# VSCode
+.vscode/

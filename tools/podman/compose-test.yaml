@@ -1,0 +1,7 @@
+services:
+  postgres:
+    image: quay.io/sclorg/postgresql-15-c9s:latest
+    environment:
+      POSTGRESQL_ADMIN_PASSWORD: insecure
+    ports:
+      - '5432:5432'

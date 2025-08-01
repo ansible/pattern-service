@@ -1,0 +1,21 @@
+FROM registry.access.redhat.com/ubi9/ubi:latest
+
+WORKDIR /app
+
+COPY requirements/requirements-dev.txt .
+
+RUN dnf install python3.11 python3.11-pip -y
+
+RUN python3.11 -m pip install --no-cache-dir -r requirements-dev.txt
+
+ADD core /app/core
+
+ADD pattern_service /app/pattern_service
+
+COPY manage.py .
+
+ENV PATTERN_SERVICE_MODE=development
+
+EXPOSE 5000
+
+CMD ["python3.11", "/app/manage.py", "runserver", "0.0.0.0:5000"]

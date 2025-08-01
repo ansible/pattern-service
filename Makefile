@@ -12,8 +12,11 @@ help: ## Show this help message
 # -------------------------------------
 
 CONTAINER_RUNTIME ?= podman
+COMPOSE_COMMAND ?= podman compose
 IMAGE_NAME ?= pattern-service
 IMAGE_TAG ?= latest
+QUAY_NAMESPACE ?= ansible
+BUILD_ARGS ?= --arch amd64
 
 ensure-namespace:
 	@test -n "$$QUAY_NAMESPACE" || (echo "Error: QUAY_NAMESPACE is required to push quay.io" && exit 1)
@@ -21,7 +24,7 @@ ensure-namespace:
 .PHONY: build
 build: ## Build the container image
 	@echo "Building container image..."
-	$(CONTAINER_RUNTIME) build -t $(IMAGE_NAME):$(IMAGE_TAG) -f Dockerfile.dev --arch amd64 .
+	$(CONTAINER_RUNTIME) build -t $(IMAGE_NAME):$(IMAGE_TAG) -f tools/podman/Containerfile.dev $(BUILD_ARGS) .
 
 .PHONY: clean
 clean: ## Remove container image
@@ -34,6 +37,24 @@ push: ensure-namespace build ## Tag and push container image to Quay.io
 	$(CONTAINER_RUNTIME) tag $(IMAGE_NAME):$(IMAGE_TAG) quay.io/$(QUAY_NAMESPACE)/$(IMAGE_NAME):$(IMAGE_TAG)
 	$(CONTAINER_RUNTIME) push quay.io/$(QUAY_NAMESPACE)/$(IMAGE_NAME):$(IMAGE_TAG)
 
+#--------------------------------------
+# Compose
+# -------------------------------------
+.PHONY: compose-build
+compose-build: ## Build the containers images for the services
+	$(COMPOSE_COMMAND) -f tools/podman/compose.yaml $(COMPOSE_OPTS) build
+
+.PHONY: compose-up ## Build and start the containers for the services
+compose-up:
+	$(COMPOSE_COMMAND) -f tools/podman/compose.yaml $(COMPOSE_OPTS) up $(COMPOSE_UP_OPTS) --remove-orphans
+
+.PHONY: compose-down
+compose-down: ## Stop containers and remove containers, network, images and volumes created by compose-up
+	$(COMPOSE_COMMAND) -f tools/podman/compose.yaml $(COMPOSE_OPTS) down --remove-orphans
+
+.PHONY: compose-restart
+compose-restart: compose-down compose-up ## Stop and remove existing infrastructure and start a new one
+
 # -------------------------------------
 # Dependencies
 # -------------------------------------
@@ -43,3 +64,13 @@ requirements: ## Generate requirements.txt files from pyproject.toml
 	pip-compile -o requirements/requirements.txt pyproject.toml
 	pip-compile --extra dev --extra test -o requirements/requirements-dev.txt pyproject.toml
 	pip-compile --extra test -o requirements/requirements-test.txt pyproject.toml
+
+# -------------------------------------
+# Test
+# -------------------------------------
+
+.PHONY: test
+test: ## Run tests with a postgres database using docker-compose
+	$(COMPOSE_COMMAND) -f tools/podman/compose-test.yaml $(COMPOSE_OPTS) up -d
+	-tox -e test
+	$(COMPOSE_COMMAND) -f tools/podman/compose-test.yaml $(COMPOSE_OPTS) down

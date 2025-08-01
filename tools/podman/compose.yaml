@@ -1,0 +1,72 @@
+x-environment: &common-env
+  PATTERN_SERVICE_DB_HOST: postgres
+  PATTERN_SERVICE_DB_PORT: 5432
+  PATTERN_SERVICE_DB_NAME: pattern_db
+  PATTERN_SERVICE_DB_USER: pattern
+  PATTERN_SERVICE_DB_PASSWORD: pattern123
+  PATTERN_SERVICE_MODE: development
+services:
+  postgres:
+    image: quay.io/sclorg/postgresql-15-c9s:latest
+    environment:
+      POSTGRESQL_USER: pattern
+      POSTGRESQL_PASSWORD: pattern123
+      POSTGRESQL_DATABASE: pattern_db
+    ports:
+      - '5432:5432'
+    volumes:
+      - 'postgres_data:/var/lib/pgsql/data'
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "pattern", "-d", "pattern_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+  pattern-service-worker:
+    image: localhost/pattern-service-worker
+    environment:
+      << : *common-env
+      PATTERN_SERVICE_DISPATCHER_NODE_ID: pattern-service-worker
+    build:
+      context: ../../
+      dockerfile: tools/podman/Containerfile.dev
+    command:
+      - /bin/bash
+      - -c
+      - python3.11 /app/manage.py worker
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: always
+
+  pattern-service-api:
+    image: localhost/pattern-service-api
+    environment:
+      << : *common-env
+      PATTERN_SERVICE_DISPATCHER_NODE_ID: pattern-service-api
+    build:
+      context: ../../
+      dockerfile: tools/podman/Containerfile.dev
+    command:
+      - /bin/bash
+      - -c
+      - >-
+        python3.11 /app/manage.py makemigrations
+        && python3.11 /app/manage.py migrate
+        && python3.11 /app/manage.py runserver 0.0.0.0:5000
+    ports:
+      - "8000:5000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      pattern-service-worker:
+        condition: service_started
+    healthcheck:
+      test: [ 'CMD', 'curl', '-q', 'http://localhost:8000/ping/' ]
+      interval: 30s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres_data: {}

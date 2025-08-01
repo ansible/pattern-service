@@ -1,3 +1,5 @@
+import uuid
+
 from ansible_base.lib.utils.views.ansible_base import AnsibleBaseView
 from rest_framework import status
 from rest_framework.decorators import api_view
@@ -5,6 +7,8 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.viewsets import ReadOnlyModelViewSet
+
+from core.tasks.demo import sumbit_hello_world
 
 from .models import Automation
 from .models import ControllerLabel
@@ -94,4 +98,9 @@ def ping(request: Request) -> Response:
 
 @api_view(["GET"])
 def test(request: Request) -> Response:
-    return Response(data={"hello": "world"}, status=200)
+    text = f"hello world from uuid = {uuid.uuid4()}"
+    id = sumbit_hello_world(text)
+    return Response(
+        f"Task submitted (uuid={id}), check dispatcher logs. Should print '{text}'",
+        status=200,
+    )

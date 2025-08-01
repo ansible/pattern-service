@@ -5,6 +5,8 @@ from ansible_base.lib.dynamic_config import factory
 from ansible_base.lib.dynamic_config import load_envvars
 from ansible_base.lib.dynamic_config import load_standard_settings_files
 
+from .dispatcher import override_dispatcher_settings
+
 try:
     from dotenv import load_dotenv
 
@@ -24,4 +26,5 @@ DYNACONF = factory(
 )
 load_standard_settings_files(DYNACONF)
 load_envvars(DYNACONF)
+override_dispatcher_settings(DYNACONF)
 export(__name__, DYNACONF)

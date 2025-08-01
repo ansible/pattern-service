@@ -36,5 +36,6 @@ LOGGING = {
             "handlers": ["console"],
             "level": "INFO",
         },
+        "dispatcherd": {"handlers": ["console"], "level": "INFO"},
     },
 }
