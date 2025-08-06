@@ -19,12 +19,12 @@ from django.contrib import admin
 from django.urls import include
 from django.urls import path
 
-from core.views import ping
-from core.views import test
+from core.views import PingView
+from core.views import TestView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/pattern-service/v1/", include("core.urls")),
-    path("ping/", ping),
-    path("api/pattern-service/v1/test/", test),
+    path("ping/", PingView.as_view()),
+    path("api/pattern-service/v1/test/", TestView.as_view()),
 ]

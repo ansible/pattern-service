@@ -4,7 +4,16 @@ from ansible_base.lib.abstract_models import CommonModel
 from django.db import models
 
 
-class Pattern(CommonModel):
+class PatternServiceBaseModel(CommonModel):
+    class Meta:
+        abstract = True
+
+    created_by_ansible_id: models.CharField = models.CharField(
+        max_length=200, blank=True, null=True
+    )
+
+
+class Pattern(PatternServiceBaseModel):
     class Meta:
         app_label = "core"
         ordering = ["id"]
@@ -24,7 +33,7 @@ class Pattern(CommonModel):
     pattern_definition: models.JSONField = models.JSONField(blank=True, null=True)
 
 
-class ControllerLabel(CommonModel):
+class ControllerLabel(PatternServiceBaseModel):
     class Meta:
         app_label = "core"
         ordering = ["id"]
@@ -34,7 +43,7 @@ class ControllerLabel(CommonModel):
     )
 
 
-class PatternInstance(CommonModel):
+class PatternInstance(PatternServiceBaseModel):
     class Meta:
         app_label = "core"
         ordering = ["id"]
@@ -63,7 +72,7 @@ class PatternInstance(CommonModel):
     )
 
 
-class Automation(CommonModel):
+class Automation(PatternServiceBaseModel):
     class Meta:
         app_label = "core"
         ordering = ["id"]
@@ -80,7 +89,7 @@ class Automation(CommonModel):
     )
 
 
-class Task(CommonModel):
+class Task(PatternServiceBaseModel):
     class Meta:
         app_label = "core"
         ordering = ["id"]

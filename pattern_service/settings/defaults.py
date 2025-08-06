@@ -27,6 +27,12 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "core",
+    "ansible_base.activitystream",
+    "ansible_base.rest_filters",
+    "ansible_base.jwt_consumer",
+    "ansible_base.resource_registry",
+    "ansible_base.rbac",
+    "pattern_service",
 ]
 
 MIDDLEWARE = [
@@ -133,3 +139,22 @@ DISPATCHER_CONFIG = {
     },
     "publish": {"default_control_broker": "socket", "default_broker": "pg_notify"},
 }
+AUTH_USER_MODEL = "pattern_service.User"
+
+ANSIBLE_BASE_TEAM_MODEL = "pattern_service.Team"
+ANSIBLE_BASE_ORGANIZATION_MODEL = "pattern_service.Organization"
+ANSIBLE_BASE_RESOURCE_CONFIG_MODULE = "pattern_service.resource_api"
+
+ANSIBLE_BASE_ALLOW_SINGLETON_USER_ROLES = True
+ANSIBLE_BASE_ALLOW_SINGLETON_TEAM_ROLES = True
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "pattern_service.authentication.PatternServiceJWTAuthentication",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "ansible_base.rbac.api.permissions.AnsibleBaseObjectPermissions",
+    ],
+}
+
+ANSIBLE_BASE_JWT_KEY = "http://localhost"
