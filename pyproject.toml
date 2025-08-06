@@ -18,6 +18,7 @@ dependencies = [
     "django-ansible-base==2025.5.8",
     "dispatcherd",
     "psycopg",
+    "pyjwt==2.7.0",
 ]
 
 [project.urls]
