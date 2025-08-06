@@ -62,7 +62,7 @@ PATTERN_SERVICE_MODE=development
 
 Several endpoints in the pattern service rely on asynchronous tasks that are handled by a separate running service, the dispatcher service. This uses [PostgreSQL's](https://www.postgresql.org/) `pg_notify` ability to send asyncronous tasks from the django application to the dispatcher service. For more details, see the [dispatcherd documentation](https://github.com/ansible/dispatcherd/blob/main/README.md).
 
-To make use of the dispatcher, you will need to ensure that both postgres and the dispatcher service are running. _The easiest way to do this is via [docker-compose](./tools/container/README.md)_, however it is also possible to do this manually as follows:
+To make use of the dispatcher, you will need to ensure that both postgres and the dispatcher service are running. _The easiest way to do this is via [docker-compose](./tools/podman/README.md)_, however it is also possible to do this manually as follows:
 
 - Install postgres locally and create a database for the service.
 - Update your local .env file to reference your postgres server and database details (these can also be exported to your shell env):
