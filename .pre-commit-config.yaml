@@ -52,3 +52,5 @@ repos:
       - id: mypy
         pass_filenames: false
         args: [--config-file=pyproject.toml, --ignore-missing-imports, "."]
+        additional_dependencies:
+          - types-requests

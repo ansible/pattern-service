@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+from typing import Any
+from typing import Dict
+from typing import Optional
+
 from ansible_base.lib.abstract_models import CommonModel
 from django.db import models
 
@@ -85,12 +89,57 @@ class Task(CommonModel):
         app_label = "core"
         ordering = ["id"]
 
-    status_choices = (
-        ("Initiated", "Initiated"),
-        ("Running", "Running"),
-        ("Completed", "Completed"),
-        ("Failed", "Failed"),
-    )
+    class Status(models.TextChoices):
+        INITIATED = "Initiated"
+        RUNNING = "Running"
+        COMPLETED = "Completed"
+        FAILED = "Failed"
 
-    status: models.CharField = models.CharField(max_length=20, choices=status_choices)
+    status: models.CharField = models.CharField(
+        max_length=20, choices=Status.choices, default=Status.INITIATED, db_index=True
+    )
     details: models.JSONField = models.JSONField(null=True, blank=True)
+    updated_at: models.DateTimeField = models.DateTimeField(auto_now=True)
+
+    def set_status(
+        self,
+        new_status: str,
+        details: Optional[Dict[str, Any]] = None,
+        save_immediately: bool = True,
+    ) -> None:
+        """
+        Safely update the task's status and optional details.
+
+        Args:
+            new_status (str): The new status (must be one of Status.choices).
+            details (Dict[str, Any], optional): Additional info about this status update.
+            save_immediately (bool): If True, saves the instance to the database
+                immediately.
+
+        Raises:
+            ValueError: If the provided status is invalid.
+        """
+        if new_status not in self.Status.values:
+            raise ValueError(
+                f"Invalid status '{new_status}'. Allowed values: {self.Status.values}"
+            )
+
+        self.status = new_status
+        self.details = details or {}
+        if save_immediately:
+            self.save(update_fields=["status", "details", "updated_at"])
+
+    def mark_initiated(self, details: Optional[Dict[str, Any]] = None) -> None:
+        self.set_status(self.Status.INITIATED, details)
+
+    def mark_running(self, details: Optional[Dict[str, Any]] = None) -> None:
+        self.set_status(self.Status.RUNNING, details)
+
+    def mark_completed(self, details: Optional[Dict[str, Any]] = None) -> None:
+        self.set_status(self.Status.COMPLETED, details)
+
+    def mark_failed(self, details: Optional[Dict[str, Any]] = None) -> None:
+        self.set_status(self.Status.FAILED, details)
+
+    def __str__(self) -> str:
+        return f"Task #{self.pk} - {self.status}"
