@@ -14,10 +14,14 @@ build==1.2.2.post1
     # via pip-tools
 cachetools==6.1.0
     # via tox
+certifi==2025.8.3
+    # via requests
 cffi==1.17.1
     # via cryptography
 chardet==5.2.0
     # via tox
+charset-normalizer==3.4.2
+    # via requests
 click==8.2.1
     # via
     #   black
@@ -57,6 +61,8 @@ flake8==6.1.0
     # via pattern_service (pyproject.toml)
 flynt==1.0.2
     # via pattern_service (pyproject.toml)
+idna==3.10
+    # via requests
 inflection==0.5.1
     # via django-ansible-base
 iniconfig==2.1.0
@@ -119,6 +125,8 @@ python-dotenv==1.1.1
     # via pattern_service (pyproject.toml)
 pyyaml==6.0.2
     # via dispatcherd
+requests==2.32.4
+    # via pattern_service (pyproject.toml)
 sqlparse==0.5.3
     # via
     #   django
@@ -127,12 +135,18 @@ tox==4.27.0
     # via pattern_service (pyproject.toml)
 types-pyyaml==6.0.12.20250516
     # via django-stubs
+types-requests==2.32.4.20250611
+    # via pattern_service (pyproject.toml)
 typing-extensions==4.13.2
     # via
     #   django-stubs
     #   django-stubs-ext
     #   mypy
     #   psycopg
+urllib3==2.5.0
+    # via
+    #   requests
+    #   types-requests
 virtualenv==20.31.2
     # via tox
 wheel==0.45.1

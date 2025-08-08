@@ -17,3 +17,13 @@ DATABASES = {
         "NAME": DB_NAME,
     }
 }
+
+# Base URL of your AAP service
+AAP_URL = "http://localhost:44926"  # or your default URL
+
+# Whether to verify SSL certificates (True or False)
+AAP_VALIDATE_CERTS = False
+
+# Default username and password for authentication
+AAP_USERNAME = "admin"
+AAP_PASSWORD = "password"

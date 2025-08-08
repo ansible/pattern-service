@@ -6,8 +6,12 @@
 #
 asgiref==3.8.1
     # via django
+certifi==2025.8.3
+    # via requests
 cffi==1.17.1
     # via cryptography
+charset-normalizer==3.4.2
+    # via requests
 cryptography==45.0.4
     # via django-ansible-base
 dispatcherd==2025.5.21
@@ -25,6 +29,8 @@ djangorestframework==3.16.0
     # via django-ansible-base
 dynaconf==3.2.11
     # via django-ansible-base
+idna==3.10
+    # via requests
 inflection==0.5.1
     # via django-ansible-base
 psycopg==3.2.9
@@ -33,9 +39,13 @@ pycparser==2.22
     # via cffi
 pyyaml==6.0.2
     # via dispatcherd
+requests==2.32.4
+    # via pattern_service (pyproject.toml)
 sqlparse==0.5.3
     # via
     #   django
     #   django-ansible-base
 typing-extensions==4.14.1
     # via psycopg
+urllib3==2.5.0
+    # via requests

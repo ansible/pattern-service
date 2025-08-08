@@ -39,6 +39,7 @@ class PatternViewSet(CoreViewSet, ModelViewSet):
             status="Initiated", details={"model": "Pattern", "id": pattern.id}
         )
 
+        headers = self.get_success_headers(serializer.data)
         return Response(
             {
                 "task_id": task.id,
@@ -47,6 +48,7 @@ class PatternViewSet(CoreViewSet, ModelViewSet):
                 ),
             },
             status=status.HTTP_202_ACCEPTED,
+            headers=headers,
         )
 
 

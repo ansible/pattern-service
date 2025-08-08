@@ -13,6 +13,7 @@ Hi there! We're excited to have you as a contributor.
     - [Set env variables for development](#set-env-variables-for-development)
     - [Configure postgres and run the dispatcher service](#configure-postgres-and-run-the-dispatcher-service)
     - [Configure and run the application](#configure-and-run-the-application)
+    - [Development configuration](#development-configuration)
   - [Updating dependencies](#updating-dependencies)
   - [Running linters and code checks](#running-linters-and-code-checks)
   - [Running tests](#running-tests)
@@ -84,6 +85,31 @@ In a separate terminal window, run:
 `python manage.py migrate && python manage.py runserver`
 
 The application can be reached in your browser at `https://localhost:8000/`. The Django admin UI is accessible at `https://localhost:8000/admin` and the available API endpoints will be listed in the 404 information at `http://localhost:8000/api/pattern-service/v1/`.
+
+### Development Configuration
+
+Default configuration values for connecting to the Ansible Automation Platform (AAP) service are defined in `development_defaults.py`:
+
+```bash
+AAP_URL = "http://localhost:44926"        # Base URL of your AAP instance
+AAP_VALIDATE_CERTS = False                # Whether to verify SSL certificates
+AAP_USERNAME = "admin"                    # Username for AAP authentication
+AAP_PASSWORD = "password"                 # Password for AAP authentication
+```
+
+*Note*: These defaults are placeholders for local development only. You must provide proper values for your environment by setting environment variables prefixed with `PATTERN_SERVICE_` or via a `.env` file.
+For example:
+
+```bash
+export PATTERN_SERVICE_AAP_URL="http://your-ip-address:44926"
+export PATTERN_SERVICE_AAP_VALIDATE_CERTS="False"
+export PATTERN_SERVICE_AAP_USERNAME="admin"
+export PATTERN_SERVICE_AAP_PASSWORD="your-password"
+```
+
+This ensures secure and correct operation in your deployment or testing environment.
+
+Dynaconf will prioritize environment variables and values in `.env` over defaults in `development_defaults.py`.
 
 ## Updating dependencies
 

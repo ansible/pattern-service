@@ -13,6 +13,7 @@ try:
     load_dotenv()
 except ImportError:
     pass
+
 os.environ["PATTERN_SERVICE_MODE"] = os.environ.get(
     "PATTERN_SERVICE_MODE", "production"
 )
