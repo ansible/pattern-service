@@ -3,6 +3,7 @@ import os
 import shutil
 import tempfile
 from typing import List
+from unittest.mock import call
 from unittest.mock import patch
 
 from django.test import TestCase
@@ -11,6 +12,7 @@ from core.models import ControllerLabel
 from core.models import Pattern
 from core.models import PatternInstance
 from core.models import Task
+from core.task_runner import run_pattern_instance_task
 from core.task_runner import run_pattern_task
 
 
@@ -134,3 +136,81 @@ class PatternTaskTest(SharedDataMixin, TestCase):
         self.task.refresh_from_db()
         self.assertEqual(self.task.status, "Failed")
         self.assertIn("Download failed", self.task.details.get("error", ""))
+
+
+class PatternInstanceTaskTest(SharedDataMixin, TestCase):
+    @patch("core.task_runner.assign_execute_roles")
+    @patch("core.task_runner.save_instance_state")
+    @patch("core.task_runner.create_job_templates")
+    @patch("core.task_runner.create_labels")
+    @patch("core.task_runner.create_execution_environment")
+    @patch("core.task_runner.create_project")
+    @patch("core.models.Task.set_status", autospec=True)
+    def test_run_pattern_instance_success(
+        self,
+        mock_update_status,
+        mock_create_project,
+        mock_create_ee,
+        mock_create_labels,
+        mock_create_jts,
+        mock_save_instance,
+        mock_assign_roles,
+    ):
+        mock_create_project.side_effect = [321]
+        mock_create_ee.side_effect = [654]
+        mock_create_labels.side_effect = [[]]
+        mock_create_jts.side_effect = [[]]
+
+        run_pattern_instance_task(
+            instance_id=self.pattern_instance.id,
+            task_id=self.task.id,
+        )
+
+        mock_create_project.assert_called_once_with(
+            self.pattern_instance, self.pattern, self.pattern.pattern_definition
+        )
+        mock_assign_roles.assert_called_once()
+
+        # Ensure task marked Completed
+        mock_update_status.assert_has_calls(
+            [
+                call(self.task, "Running", {"info": "Creating controller project"}),
+                call(self.task, "Running", {"info": "Creating execution environment"}),
+                call(self.task, "Running", {"info": "Creating labels"}),
+                call(self.task, "Running", {"info": "Creating job templates"}),
+                call(self.task, "Running", {"info": "Saving instance"}),
+                call(self.task, "Running", {"info": "Assigning roles"}),
+                call(self.task, "Completed", {"info": "PatternInstance processed"}),
+            ]
+        )
+
+    @patch("core.task_runner.assign_execute_roles")
+    @patch("core.task_runner.save_instance_state")
+    @patch("core.task_runner.create_job_templates")
+    @patch("core.task_runner.create_labels")
+    @patch("core.task_runner.create_execution_environment")
+    @patch("core.task_runner.create_project")
+    @patch("core.models.Task.set_status", autospec=True)
+    def test_failure_path(
+        self,
+        mock_update_status,
+        mock_create_project,
+        *_,
+    ):
+        # Simulate failure inside create_project
+        mock_create_project.side_effect = RuntimeError("error")
+
+        # No exception should propagate because the task function swallows it
+        run_pattern_instance_task(
+            instance_id=self.pattern_instance.id,
+            task_id=self.task.id,
+        )
+
+        # Verify that the task was marked Failed with the right message
+        mock_update_status.assert_any_call(
+            self.task,
+            "Failed",
+            {"error": "error"},
+        )
+
+        mock_create_project.assert_called_once()

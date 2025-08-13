@@ -1,15 +1,32 @@
 import contextlib
 import logging
 import os
+import random
 import shutil
 import tarfile
 import tempfile
+import time
+import urllib.parse
+from typing import Any
+from typing import Dict
 from typing import Iterator
+from typing import List
 from urllib.parse import urljoin
 
 from django.conf import settings
+from django.db import transaction
+from requests.exceptions import HTTPError
+from requests.exceptions import RequestException
+from requests.exceptions import Timeout
 
+from core.models import ControllerLabel
+from core.models import Pattern
+from core.models import PatternInstance
+
+from ..http_helpers import RetryError
 from .client import get
+from .client import get_http_session
+from .client import post
 
 logger = logging.getLogger(__name__)
 
