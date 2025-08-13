@@ -12,6 +12,7 @@ def test_get_http_session():
     s2 = cc.get_http_session()
     assert s1 is not s2
 
+
 def _fake_response(status_code: int, payload: dict | list) -> requests.Response:
     """Return a Response-like mock that behaves for raise_for_status/json."""
     resp = MagicMock(spec=requests.Response)
@@ -24,12 +25,6 @@ def _fake_response(status_code: int, payload: dict | list) -> requests.Response:
     else:
         resp.raise_for_status.return_value = None
     return resp
-
-
-def test_get_http_session():
-    s1 = cc.get_http_session()
-    s2 = cc.get_http_session()
-    assert s1 is not s2
 
 
 @patch("core.utils.controller.client.get_http_session")

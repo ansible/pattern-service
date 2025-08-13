@@ -18,9 +18,6 @@ from ..http_helpers import safe_json
 logger = logging.getLogger(__name__)
 
 
-F = TypeVar("F", bound=Callable[..., requests.Response])
-
-
 def get_http_session() -> Session:
     """Creates and returns a new Session instance with AAP credentials."""
     session = Session()
