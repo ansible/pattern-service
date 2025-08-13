@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 from ansible_base.lib.serializers.common import CommonModelSerializer
 
 from .models import Automation
@@ -9,10 +11,23 @@ from .models import PatternInstance
 from .models import Task
 
 
-class PatternSerializer(CommonModelSerializer):
+class PatternServiceBaseSerializer(CommonModelSerializer):
+
     class Meta(CommonModelSerializer.Meta):
         model = Pattern
-        fields = CommonModelSerializer.Meta.fields + [
+        fields = CommonModelSerializer.Meta.fields
+
+    def to_representation(self, instance: Any) -> Any:
+        ret = super().to_representation(instance)
+        username = self.context["request"].user.username or "runner"
+        ret["created_by_ansible_id"] = username
+        return ret
+
+
+class PatternSerializer(PatternServiceBaseSerializer):
+    class Meta(PatternServiceBaseSerializer.Meta):
+        model = Pattern
+        fields = PatternServiceBaseSerializer.Meta.fields + [
             "id",
             "collection_name",
             "collection_version",
@@ -23,16 +38,16 @@ class PatternSerializer(CommonModelSerializer):
         read_only_fields = ["pattern_definition", "collection_version_uri"]
 
 
-class ControllerLabelSerializer(CommonModelSerializer):
-    class Meta(CommonModelSerializer.Meta):
+class ControllerLabelSerializer(PatternServiceBaseSerializer):
+    class Meta(PatternServiceBaseSerializer.Meta):
         model = ControllerLabel
         fields = CommonModelSerializer.Meta.fields + ["id", "label_id"]
 
 
-class PatternInstanceSerializer(CommonModelSerializer):
-    class Meta(CommonModelSerializer.Meta):
+class PatternInstanceSerializer(PatternServiceBaseSerializer):
+    class Meta(PatternServiceBaseSerializer.Meta):
         model = PatternInstance
-        fields = CommonModelSerializer.Meta.fields + [
+        fields = PatternServiceBaseSerializer.Meta.fields + [
             "id",
             "organization_id",
             "controller_project_id",
@@ -49,10 +64,10 @@ class PatternInstanceSerializer(CommonModelSerializer):
         ]
 
 
-class AutomationSerializer(CommonModelSerializer):
-    class Meta(CommonModelSerializer.Meta):
+class AutomationSerializer(PatternServiceBaseSerializer):
+    class Meta(PatternServiceBaseSerializer.Meta):
         model = Automation
-        fields = CommonModelSerializer.Meta.fields + [
+        fields = PatternServiceBaseSerializer.Meta.fields + [
             "id",
             "automation_type",
             "automation_id",
@@ -61,10 +76,10 @@ class AutomationSerializer(CommonModelSerializer):
         ]
 
 
-class TaskSerializer(CommonModelSerializer):
-    class Meta(CommonModelSerializer.Meta):
+class TaskSerializer(PatternServiceBaseSerializer):
+    class Meta(PatternServiceBaseSerializer.Meta):
         model = Task
-        fields = CommonModelSerializer.Meta.fields + [
+        fields = PatternServiceBaseSerializer.Meta.fields + [
             "status",
             "details",
         ]

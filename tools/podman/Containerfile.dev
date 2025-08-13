@@ -12,6 +12,8 @@ ADD core /app/core
 
 ADD pattern_service /app/pattern_service
 
+RUN chmod -R 0777 /app/
+
 COPY manage.py .
 
 ENV PATTERN_SERVICE_MODE=development

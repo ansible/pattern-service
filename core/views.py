@@ -1,14 +1,11 @@
-import uuid
-
 from ansible_base.lib.utils.views.ansible_base import AnsibleBaseView
 from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.viewsets import ReadOnlyModelViewSet
-
-from core.tasks.demo import sumbit_hello_world
 
 from .models import Automation
 from .models import ControllerLabel
@@ -91,16 +88,14 @@ class TaskViewSet(CoreViewSet, ReadOnlyModelViewSet):
     serializer_class = TaskSerializer
 
 
-@api_view(["GET"])
-def ping(request: Request) -> Response:
-    return Response(data={"status": "ok"}, status=200)
+class PingView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request: Request) -> Response:
+        return Response(data={"status": "ok"}, status=status.HTTP_200_OK)
 
 
-@api_view(["GET"])
-def test(request: Request) -> Response:
-    text = f"hello world from uuid = {uuid.uuid4()}"
-    id = sumbit_hello_world(text)
-    return Response(
-        f"Task submitted (uuid={id}), check dispatcher logs. Should print '{text}'",
-        status=200,
-    )
+class TestView(APIView):
+
+    def get(self, request: Request) -> Response:
+        return Response(data={"hello": "world"}, status=status.HTTP_200_OK)
