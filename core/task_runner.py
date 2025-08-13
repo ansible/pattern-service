@@ -59,8 +59,9 @@ def run_pattern_task(pattern_id: int, task_id: int) -> None:
         logger.error(f"Could not find pattern definition for task {task_id}")
         task.mark_failed({"error": "Pattern definition not found."})
     except Exception as e:
-        logger.error(f"Task {task_id} failed: {e}")
-        task.mark_failed({"error": str(e)})
+        error_message = f"An unexpected error occurred {str(e)}."
+        logger.exception(f"Task {task_id} failed unexpectedly.")
+        task.mark_failed({"error": error_message})
 
 
 def run_pattern_instance_task(instance_id: int, task_id: int) -> None:
