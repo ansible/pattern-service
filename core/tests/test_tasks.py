@@ -183,6 +183,13 @@ class PatternInstanceTaskTest(SharedDataMixin, TestCase):
                 call(self.task, "Completed", {"info": "PatternInstance processed"}),
             ]
         )
+        # Assert all key functions were called exactly once
+        mock_create_project.assert_called_once()
+        mock_create_ee.assert_called_once()
+        mock_create_labels.assert_called_once()
+        mock_create_jts.assert_called_once()
+        mock_save_instance.assert_called_once()
+        mock_assign_roles.assert_called_once()
 
     @patch("core.task_runner.assign_execute_roles")
     @patch("core.task_runner.save_instance_state")

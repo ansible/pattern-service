@@ -384,15 +384,8 @@ def test_wait_for_project_sync_timeout_then_retry_then_fail():
 
 @patch("core.utils.controller.helpers.transaction.atomic")
 def test_save_instance_state_updates_and_links(mock_atomic):
-    class DummyCtx:
-        def __enter__(self):
-            return self
-
-        def __exit__(self, exc_type, exc, tb):
-            return False
-
-    mock_atomic.return_value = DummyCtx()
-
+    mock_atomic.return_value.__enter__.return_value = None
+    mock_atomic.return_value.__exit__.return_value = None
     instance = MagicMock()
     labels = [MagicMock(), MagicMock()]
     autos = [{"type": "job_template", "id": 1, "primary": True}]
