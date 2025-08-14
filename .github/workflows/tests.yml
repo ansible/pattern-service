@@ -5,8 +5,6 @@ on:
     branches:
       - main
       - stable-*
-    tags:
-      - "*"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
@@ -40,25 +38,18 @@ jobs:
         run: make test
 
 # for SonarCloud code coverage reporting
+
       - name: Upload Code Coverage Report from Tests
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
-          path: code.cov
+          path: coverage.xml
 
       - name: Save off PR Number
-        run: echo "PR ${{ github.event.number }}" > pr_number.txt
+        run: echo "${{ github.event.number }}" > pr-number.txt
+
       - name: Upload PR Number
         uses: actions/upload-artifact@v4
         with:
-          name: pr_number
-          path: pr_number.txt
-
-      - name: SonarCube Static Scans (on push)
-        uses: SonarSource/sonarqube-scan-action@v5.2.0
-        if: github.event_name == 'push' && startsWith(github.repository, 'ansible-automation-platform') && endsWith(github.repository, '/sonar-cutlery')
-        env:
-          SONAR_TOKEN: ${{ secrets[format('{0}', vars.SONAR_TOKEN_SECRET_NAME)] }}
-        with:
-          args: >
-            -Dsonar.go.coverage.reportPaths=code.cov
+          name: pr-number
+          path: pr-number.txt

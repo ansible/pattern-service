@@ -1,3 +1,5 @@
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=ansible_pattern-service&metric=coverage)](https://sonarcloud.io/summary/new_code?id=ansible_pattern-service)
+
 # Pattern Service
 
 An Ansible Automation Platform service that automates the deployment (creation and deletion) of patterns.
