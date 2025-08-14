@@ -1,6 +1,7 @@
 import json
 import logging
 import urllib.parse
+from contextlib import closing
 from typing import Any
 from typing import Dict
 from typing import Optional
@@ -55,50 +56,53 @@ def post(
             Propagated if the status code is not a handled 400 or if the lookup
             returns no result.
     """
-    session = get_http_session()
     url = urllib.parse.urljoin(settings.AAP_URL, path)
-    try:
-        response = session.post(url, json=data)
-        response.raise_for_status()
-
-        # Safely parse response JSON
-        return safe_json(lambda: response)()
-
-    except requests.exceptions.HTTPError as exc:
-        response = exc.response
-        if response.status_code != 400:
-            raise
-
+    with closing(get_http_session()) as session:
         try:
-            error_json = safe_json(lambda: response)()
-        except Exception:
-            error_json = {"detail": response.text}
+            response = session.post(url, json=data)
+            response.raise_for_status()
 
-        logger.warning(f"AAP POST {url} failed with 400. Error response: {error_json}")
-        logger.debug(f"Payload sent: {json.dumps(data, indent=2)}")
-        logger.debug(f"AAP POST {url} 400; dedup lookup keys: {dedupe_keys}")
+            # Safely parse response JSON
+            return safe_json(lambda: response)()
 
-        # Attempt deduplication if resource already exists
-        params = {k: data[k] for k in dedupe_keys if k in data}
-        try:
-            lookup_resp = session.get(url, params=params)
-            lookup_resp.raise_for_status()
-            results = safe_json(lambda: lookup_resp)().get("results", [])
+        except requests.exceptions.HTTPError as exc:
+            response = exc.response
+            if response.status_code != 400:
+                raise
 
-            if results:
-                logger.debug(
-                    f"Resource already exists. Returning existing resource: {results[0]}"
-                )
-                return results[0]
-        except Exception as e:
-            logger.debug(
-                f"Deduplication GET failed for {url} with params {params}: {e}"
+            try:
+                error_json = safe_json(lambda: response)()
+            except Exception:
+                error_json = {"detail": response.text}
+
+            logger.warning(
+                f"AAP POST {url} failed with 400. Error response: {error_json}"
             )
+            logger.debug(f"Payload sent: {json.dumps(data, indent=2)}")
+            logger.debug(f"AAP POST {url} 400; dedup lookup keys: {dedupe_keys}")
 
-        # If dedupe fails or no match found, raise with full detail
-        raise requests.HTTPError(
-            f"400 Bad Request for {url}.\n"
-            f"Payload: {json.dumps(data, indent=2)}\n"
-            f"Response: {json.dumps(error_json, indent=2)}",
-            response=response,
-        )
+            # Attempt deduplication if resource already exists
+            params = {k: data[k] for k in dedupe_keys if k in data}
+            try:
+                lookup_resp = session.get(url, params=params)
+                lookup_resp.raise_for_status()
+                results = safe_json(lambda: lookup_resp)().get("results", [])
+
+                if results:
+                    logger.debug(
+                        f"""Resource already exists. Returning
+                        existing resource: {results[0]}"""
+                    )
+                    return results[0]
+            except Exception as e:
+                logger.debug(
+                    f"Deduplication GET failed for {url} with params {params}: {e}"
+                )
+
+            # If dedupe fails or no match found, raise with full detail
+            raise requests.HTTPError(
+                f"400 Bad Request for {url}.\n"
+                f"Payload: {json.dumps(data, indent=2)}\n"
+                f"Response: {json.dumps(error_json, indent=2)}",
+                response=response,
+            )
