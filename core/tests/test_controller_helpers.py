@@ -13,6 +13,8 @@ from core.utils.controller import create_labels
 from core.utils.controller import create_project
 from core.utils.controller import download_collection
 from core.utils.controller import save_instance_state
+from core.utils.controller.helpers import create_controller_role_assignment
+from core.utils.controller.helpers import get_role_definition_id
 from core.utils.controller.helpers import wait_for_project_sync
 
 
@@ -254,7 +256,7 @@ def test_create_job_templates_payload_and_survey(mock_post):
     assert first_jt_payload["playbook"] == "extensions/patterns/mypat/playbooks/run.yml"
 
 
-@patch("core.utils.controller.helpers.get")
+@patch("core.utils.controller.helpers.get_http_session")
 @patch("core.utils.controller.helpers.post")
 def test_assign_execute_roles(mock_post, mock_get):
     mock_get.return_value.json.return_value = {"results": [{"id": 7}]}
@@ -267,10 +269,12 @@ def test_assign_execute_roles(mock_post, mock_get):
     assert mock_post.call_count == 6
 
 
-@patch("core.utils.controller.helpers.get")
+@patch("core.utils.controller.helpers.get_http_session")
 @patch("core.utils.controller.helpers.post")
-def test_assign_execute_roles_role_not_found_raises(mock_post, mock_get):
-    mock_get.return_value.json.return_value = {"results": []}
+def test_assign_execute_roles_role_not_found_raises(mock_post, mock_get_session):
+    mock_session = MagicMock()
+    mock_get_session.return_value = mock_session
+    mock_session.get.return_value.json.return_value = {"results": []}
 
     with pytest.raises(ValueError):
         assign_execute_roles({"teams": [1], "users": []}, [{"id": 1}])
@@ -278,17 +282,17 @@ def test_assign_execute_roles_role_not_found_raises(mock_post, mock_get):
     mock_post.assert_not_called()
 
 
-@patch("core.utils.controller.helpers.get")
+@patch("core.utils.controller.helpers.get_http_session")
 @patch("core.utils.controller.helpers.post")
-def test_assign_execute_roles_no_executors_early_return(mock_post, mock_get):
+def test_assign_execute_roles_no_executors_early_return(mock_post, mock_get_session):
     assign_execute_roles({"teams": [], "users": []}, [{"id": 1}])
-    mock_get.assert_not_called()
+    mock_get_session.assert_not_called()
     mock_post.assert_not_called()
 
 
 def test_wait_for_project_sync_eventual_success():
     with (
-        patch("requests.Session.get") as mock_get,
+        patch("requests.Session.get") as mock_get_session,
         patch("core.utils.controller.helpers.time.sleep", return_value=None),
         patch("core.utils.controller.helpers.random.uniform", return_value=1.0),
         patch(
@@ -304,13 +308,13 @@ def test_wait_for_project_sync_eventual_success():
         resp_success.raise_for_status.return_value = None
         resp_success.json.return_value = {"status": "successful"}
 
-        mock_get.side_effect = [resp_pending, resp_success]
+        mock_get_session.side_effect = [resp_pending, resp_success]
 
         wait_for_project_sync(
             "42", max_retries=5, initial_delay=0.001, max_delay=0.002, timeout=0.001
         )
 
-        assert mock_get.call_count == 2
+        assert mock_get_session.call_count == 2
 
 
 def test_wait_for_project_sync_success_first_try():
@@ -401,4 +405,93 @@ def test_save_instance_state_updates_and_links(mock_atomic):
     instance.controller_labels.add.assert_any_call(labels[1])
     instance.automations.create.assert_called_once_with(
         automation_type="job_template", automation_id=1, primary=True
+    )
+
+
+@patch("core.utils.controller.helpers.get_http_session")
+def test_get_role_definition_id_found(mock_get_session):
+    # Mock session and GET response
+    mock_session = MagicMock()
+    mock_get_session.return_value = mock_session
+
+    mock_response = MagicMock()
+    mock_response.json.return_value = {"results": [{"id": "123"}]}
+    mock_response.raise_for_status.return_value = None
+    mock_session.get.return_value = mock_response
+
+    role_id = get_role_definition_id("JobTemplate Execute")
+    assert role_id == "123"
+    mock_session.get.assert_called_once()
+
+
+@patch("core.utils.controller.helpers.get_http_session")
+def test_get_role_definition_id_not_found(mock_get_session):
+    # Mock session and GET response with empty results
+    mock_session = MagicMock()
+    mock_get_session.return_value = mock_session
+
+    mock_response = MagicMock()
+    mock_response.json.return_value = {"results": []}
+    mock_response.raise_for_status.return_value = None
+    mock_session.get.return_value = mock_response
+
+    role_id = get_role_definition_id("NonExistentRole")
+    assert role_id is None
+    mock_session.get.assert_called_once()
+
+
+@patch("core.utils.controller.helpers.get_http_session")
+def test_get_role_definition_id_http_error(mock_get_session):
+    # Mock session GET raising HTTPError
+    mock_session = MagicMock()
+    mock_get_session.return_value = mock_session
+
+    mock_response = MagicMock()
+    mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError(
+        response=MagicMock(text="error")
+    )
+    mock_session.get.return_value = mock_response
+
+    role_id = get_role_definition_id("JobTemplate Execute")
+    assert role_id is None
+    mock_session.get.assert_called_once()
+
+
+@patch("core.utils.controller.helpers.post")
+def test_create_controller_role_assignment_team(mock_post):
+    create_controller_role_assignment(
+        assignee_type="team",
+        object_id="10",
+        role_id="20",
+        assignee_id="100",
+    )
+
+    expected_data = {
+        "object_id": "10",
+        "role_definition": "20",
+        "team_ansible_id": "100",
+    }
+
+    mock_post.assert_called_once_with(
+        "/api/controller/v2/role_team_assignments/", expected_data
+    )
+
+
+@patch("core.utils.controller.helpers.post")
+def test_create_controller_role_assignment_user(mock_post):
+    create_controller_role_assignment(
+        assignee_type="user",
+        object_id="10",
+        role_id="20",
+        assignee_id="300",
+    )
+
+    expected_data = {
+        "object_id": "10",
+        "role_definition": "20",
+        "user_ansible_id": "300",
+    }
+
+    mock_post.assert_called_once_with(
+        "/api/controller/v2/role_user_assignments/", expected_data
     )

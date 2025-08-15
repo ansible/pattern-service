@@ -11,8 +11,11 @@ from typing import Any
 from typing import Dict
 from typing import Iterator
 from typing import List
+from typing import Literal
+from typing import Optional
 from urllib.parse import urljoin
 
+import requests
 from django.conf import settings
 from django.db import transaction
 from requests.exceptions import HTTPError
@@ -126,7 +129,7 @@ def create_execution_environment(
         {
             "organization": instance.organization_id,
             "credential": instance.credentials.get("ee"),
-            "image": f"{settings.AAP_URL.split('//')[-1]}/{image_name}",
+            "image": f"{urllib.parse.urlparse(settings.AAP_URL).netloc}/{image_name}",
             "pull": ee_def.get("pull") or "missing",
         }
     )
@@ -204,53 +207,83 @@ def create_job_templates(
     return automations
 
 
+def create_controller_role_assignment(
+    assignee_type: Literal["team", "user"],
+    object_id: str,
+    role_id: str,
+    assignee_id: str,
+) -> None:
+    data = {
+        "object_id": object_id,
+        "role_definition": role_id,
+        f"{assignee_type}_ansible_id": assignee_id,
+    }
+    logger.debug(f"Role assignment data: {data}")
+    post(f"/api/controller/v2/role_{assignee_type}_assignments/", data)
+
+
+def get_role_definition_id(role_name: str) -> Optional[str]:
+    """
+    Fetches the role definition ID for a given role name and content type.
+
+    Args:
+        role_name (str): The name of the role.
+
+    Returns:
+        Optional[str]: The role ID if found, otherwise None.
+    """
+    params = {"name": role_name}
+    session = get_http_session()
+    url = urllib.parse.urljoin(settings.AAP_URL, "/api/controller/v2/roles/")
+
+    try:
+        result = session.get(url, params=params)
+        result.raise_for_status()
+        roles_resp = result.json()
+
+        if roles_resp.get("results"):
+            role_id = roles_resp["results"][0]["id"]
+            logger.debug(f"Found role '{role_name}': {role_id}")
+            return role_id
+        else:
+            logger.warning(f"No role found for name={role_name}")
+            return None
+
+    except requests.exceptions.HTTPError as e:
+        logger.error(f"Failed to fetch role definition: {e.response.text}")
+        return None
+
+
 def assign_execute_roles(
-    executors: Dict[str, List[Any]], automations: List[Dict[str, Any]]
+    executors: Dict[str, List[Any]],
+    automations: List[Dict[str, Any]],
 ) -> None:
     """
-    Assigns JobTemplate Execute role to teams and users.
+    Assigns JobTemplate Execute role to teams and users via the AAP controller.
+
     Args:
         executors (Dict[str, List[Any]]): Dictionary with "teams" and "users" lists.
         automations (List[Dict[str, Any]]): List of job template metadata.
     """
-    if not executors or (not executors["teams"] and not executors["users"]):
+    if not executors or (not executors.get("teams") and not executors.get("users")):
+        logger.debug("No executors provided; skipping role assignment.")
         return
 
-    # Get role ID for "Execute" on JobTemplate
-    result = get(
-        "/api/controller/v2/roles/",
-        params={"name": "Execute", "content_type": "job_template"},
-    )
-    roles_resp = result.json()
-    if not roles_resp["results"]:
+    # Get role ID
+    role_id = get_role_definition_id("JobTemplate Execute")
+    if not role_id:
         raise ValueError("Could not find 'JobTemplate Execute' role.")
+    logger.debug(f"Job template execute role ID: {role_id}")
 
-    role_id = roles_resp["results"][0]["id"]
+    # Apply job template execute role to supplied teams/users
+    for automation in automations:
+        jt_id = automation["id"]
 
-    for auto in automations:
-        jt_id = auto["id"]
-        for team_id in executors.get("teams", []):
-            post(
-                "/api/controller/v2/role_assignments/",
-                {
-                    "discriminator": "team",
-                    "assignee_id": str(team_id),
-                    "content_type": "job_template",
-                    "object_id": jt_id,
-                    "role_id": role_id,
-                },
-            )
-        for user_id in executors.get("users", []):
-            post(
-                "/api/controller/v2/role_assignments/",
-                {
-                    "discriminator": "user",
-                    "assignee_id": str(user_id),
-                    "content_type": "job_template",
-                    "object_id": jt_id,
-                    "role_id": role_id,
-                },
-            )
+        for team in executors.get("teams", []):
+            create_controller_role_assignment("team", jt_id, role_id, str(team))
+
+        for user in executors.get("users", []):
+            create_controller_role_assignment("user", jt_id, role_id, str(user))
 
 
 def wait_for_project_sync(
