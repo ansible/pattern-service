@@ -64,6 +64,7 @@ class PatternInstanceViewSet(CoreViewSet, ModelViewSet):
     def create(self, request: Request, *args: tuple, **kwargs: dict) -> Response:
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+
         # Save initial PatternInstance
         instance = serializer.save()
 
@@ -72,6 +73,7 @@ class PatternInstanceViewSet(CoreViewSet, ModelViewSet):
             status="Initiated", details={"model": "PatternInstance", "id": instance.id}
         )
 
+        headers = self.get_success_headers(serializer.data)
         return Response(
             {
                 "task_id": task.id,
@@ -80,6 +82,7 @@ class PatternInstanceViewSet(CoreViewSet, ModelViewSet):
                 ),
             },
             status=status.HTTP_202_ACCEPTED,
+            headers=headers,
         )
 
 
