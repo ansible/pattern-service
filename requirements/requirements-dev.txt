@@ -28,6 +28,8 @@ click==8.2.1
     #   pip-tools
 colorama==0.4.6
     # via tox
+coverage[toml]==7.10.3
+    # via pytest-cov
 cryptography==45.0.4
     # via django-ansible-base
 dispatcherd==2025.5.21
@@ -98,6 +100,7 @@ platformdirs==4.3.8
 pluggy==1.6.0
     # via
     #   pytest
+    #   pytest-cov
     #   tox
 psycopg==3.2.9
     # via pattern_service (pyproject.toml)
@@ -118,7 +121,11 @@ pyproject-hooks==1.2.0
     #   build
     #   pip-tools
 pytest==8.4.1
-    # via pytest-django
+    # via
+    #   pytest-cov
+    #   pytest-django
+pytest-cov==6.2.1
+    # via pattern_service (pyproject.toml)
 pytest-django==4.11.1
     # via pattern_service (pyproject.toml)
 python-dotenv==1.1.1
