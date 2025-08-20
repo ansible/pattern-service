@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
+    "ansible_base.api_documentation",
     "core",
 ]
 
@@ -106,7 +107,8 @@ DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "db.sqlite3",
-    }
+    },
+    "dispatcher": {},
 }
 
 DISPATCHER_CONFIG = {
@@ -132,4 +134,11 @@ DISPATCHER_CONFIG = {
         "socket": {"socket_path": "pattern_service_dispatcher.sock"},
     },
     "publish": {"default_control_broker": "socket", "default_broker": "pg_notify"},
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Pattern Service API",
+    "DESCRIPTION": "Pattern Service API Specification",
+    "VERSION": "v1",
+    "SCHEMA_PATH_PREFIX": "/api/pattern-service/v1/",
 }

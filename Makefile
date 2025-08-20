@@ -50,7 +50,7 @@ compose-up:
 
 .PHONY: compose-down
 compose-down: ## Stop containers and remove containers, network, images and volumes created by compose-up
-	$(COMPOSE_COMMAND) -f tools/podman/compose.yaml $(COMPOSE_OPTS) down --remove-orphans
+	$(COMPOSE_COMMAND) -f tools/podman/compose.yaml $(COMPOSE_OPTS) down --remove-orphans --rmi
 
 .PHONY: compose-restart
 compose-restart: compose-down compose-up ## Stop and remove existing infrastructure and start a new one
@@ -75,3 +75,11 @@ test: ## Run tests with a postgres database using docker-compose
 	-rm coverage.xml
 	-tox -e test
 	$(COMPOSE_COMMAND) -f tools/podman/compose-test.yaml $(COMPOSE_OPTS) down
+
+# -------------------------------------
+# Docs
+# -------------------------------------
+
+.PHONY: generate-api-spec
+generate-api-spec: ## Generate an OpenAPI specification
+	python manage.py spectacular --validate --fail-on-warn --format openapi-json --file specifications/openapi.json

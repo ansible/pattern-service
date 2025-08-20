@@ -13,10 +13,11 @@ Hi there! We're excited to have you as a contributor.
     - [Set env variables for development](#set-env-variables-for-development)
     - [Configure postgres and run the dispatcher service](#configure-postgres-and-run-the-dispatcher-service)
     - [Configure and run the application](#configure-and-run-the-application)
-    - [Development configuration](#development-configuration)
+    - [Development Configuration](#development-configuration)
   - [Updating dependencies](#updating-dependencies)
   - [Running linters and code checks](#running-linters-and-code-checks)
   - [Running tests](#running-tests)
+  - [Building API Documentation](#building-api-documentation)
 
 ## Things to know prior to submitting code
 
@@ -63,7 +64,7 @@ PATTERN_SERVICE_MODE=development
 
 Several endpoints in the pattern service rely on asynchronous tasks that are handled by a separate running service, the dispatcher service. This uses [PostgreSQL's](https://www.postgresql.org/) `pg_notify` ability to send asyncronous tasks from the django application to the dispatcher service. For more details, see the [dispatcherd documentation](https://github.com/ansible/dispatcherd/blob/main/README.md).
 
-To make use of the dispatcher, you will need to ensure that both postgres and the dispatcher service are running. _The easiest way to do this is via [docker-compose](./tools/container/README.md)_, however it is also possible to do this manually as follows:
+To make use of the dispatcher, you will need to ensure that both postgres and the dispatcher service are running. _The easiest way to do this is via [docker-compose](./tools/podman/README.md)_, however it is also possible to do this manually as follows:
 
 - Install postgres locally and create a database for the service.
 - Update your local .env file to reference your postgres server and database details (these can also be exported to your shell env):
@@ -97,7 +98,7 @@ AAP_USERNAME = "admin"                    # Username for AAP authentication
 AAP_PASSWORD = "password"                 # Password for AAP authentication
 ```
 
-*Note*: These defaults are placeholders for local development only. You must provide proper values for your environment by setting environment variables prefixed with `PATTERN_SERVICE_` or via a `.env` file.
+_Note_: These defaults are placeholders for local development only. You must provide proper values for your environment by setting environment variables prefixed with `PATTERN_SERVICE_` or via a `.env` file.
 For example:
 
 ```bash
@@ -136,3 +137,9 @@ Running the tests requires a postgres connection. The easiest way to do this is 
 ```bash
 make test
 ```
+
+## Building API Documentation
+
+The pattern service includes support for generating an OpenAPI Description of the API. To build the documentation locally, run `make generate-api-spec`.
+
+HTML-rendered API documentation can also be accessed within the running application at `http://localhost:8000/api/pattern-service/v1/docs/` or `http://localhost:8000/api/pattern-service/v1/docs/redoc/`

@@ -1,0 +1,1455 @@
+{
+    "openapi": "3.0.3",
+    "info": {
+        "title": "Pattern Service API",
+        "version": "v1",
+        "description": "Pattern Service API Specification"
+    },
+    "paths": {
+        "/api/pattern-service/v1/automations/": {
+            "get": {
+                "operationId": "automations_list",
+                "description": "Retrieve information about all automations created by the service.",
+                "tags": [
+                    "automations"
+                ],
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "basicAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Automation"
+                                    }
+                                },
+                                "examples": {
+                                    "SampleAutomationResponse": {
+                                        "value": [
+                                            {
+                                                "id": 1,
+                                                "url": "/api/pattern-service/v1/automations/1/",
+                                                "related": {
+                                                    "pattern_instance": "/api/pattern-service/v1/pattern_instances/1/"
+                                                },
+                                                "summary_fields": {
+                                                    "pattern_instance": {
+                                                        "id": 1
+                                                    }
+                                                },
+                                                "created": "2025-06-25T01:02:03Z",
+                                                "created_by": null,
+                                                "modified": "2025-06-25T01:02:03Z",
+                                                "modified_by": null,
+                                                "automation_type": "job_template",
+                                                "automation_id": 12,
+                                                "primary": true,
+                                                "pattern_instance": 1
+                                            }
+                                        ],
+                                        "summary": "Sample automation response"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/pattern-service/v1/automations/{id}/": {
+            "get": {
+                "operationId": "automations_retrieve",
+                "description": "Retrieve information about a single automation by ID.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this automation.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "automations"
+                ],
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "basicAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Automation"
+                                },
+                                "examples": {
+                                    "SampleAutomationResponse": {
+                                        "value": {
+                                            "id": 1,
+                                            "url": "/api/pattern-service/v1/automations/1/",
+                                            "related": {
+                                                "pattern_instance": "/api/pattern-service/v1/pattern_instances/1/"
+                                            },
+                                            "summary_fields": {
+                                                "pattern_instance": {
+                                                    "id": 1
+                                                }
+                                            },
+                                            "created": "2025-06-25T01:02:03Z",
+                                            "created_by": null,
+                                            "modified": "2025-06-25T01:02:03Z",
+                                            "modified_by": null,
+                                            "automation_type": "job_template",
+                                            "automation_id": 12,
+                                            "primary": true,
+                                            "pattern_instance": 1
+                                        },
+                                        "summary": "Sample automation response"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "automations_destroy",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this automation.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "automations"
+                ],
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "basicAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/api/pattern-service/v1/controller_labels/": {
+            "get": {
+                "operationId": "controller_labels_list",
+                "description": "Retrieve information about all controller labels created by the service.",
+                "tags": [
+                    "controller_labels"
+                ],
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "basicAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/ControllerLabel"
+                                    }
+                                },
+                                "examples": {
+                                    "SampleControllerLabelResponse": {
+                                        "value": [
+                                            {
+                                                "id": 1,
+                                                "url": "/api/pattern-service/v1/controller_labels/1/",
+                                                "related": {},
+                                                "summary_fields": {},
+                                                "created": "2025-06-25T01:02:03Z",
+                                                "created_by": null,
+                                                "modified": "2025-06-25T01:02:03Z",
+                                                "modified_by": null,
+                                                "label_id": 5
+                                            }
+                                        ],
+                                        "summary": "Sample controller label response"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/pattern-service/v1/controller_labels/{id}/": {
+            "get": {
+                "operationId": "controller_labels_retrieve",
+                "description": "Retrieve information about a single controller label by ID.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this controller label.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "controller_labels"
+                ],
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "basicAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ControllerLabel"
+                                },
+                                "examples": {
+                                    "SampleControllerLabelResponse": {
+                                        "value": {
+                                            "id": 1,
+                                            "url": "/api/pattern-service/v1/controller_labels/1/",
+                                            "related": {},
+                                            "summary_fields": {},
+                                            "created": "2025-06-25T01:02:03Z",
+                                            "created_by": null,
+                                            "modified": "2025-06-25T01:02:03Z",
+                                            "modified_by": null,
+                                            "label_id": 5
+                                        },
+                                        "summary": "Sample controller label response"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "controller_labels_destroy",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this controller label.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "controller_labels"
+                ],
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "basicAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/api/pattern-service/v1/docs/schema/": {
+            "get": {
+                "operationId": "docs_schema_retrieve",
+                "description": "OpenApi3 schema for this API. Format can be selected via content negotiation.\n\n- YAML: application/vnd.oai.openapi\n- JSON: application/vnd.oai.openapi+json",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "format",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "json",
+                                "yaml"
+                            ]
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "lang",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "af",
+                                "ar",
+                                "ar-dz",
+                                "ast",
+                                "az",
+                                "be",
+                                "bg",
+                                "bn",
+                                "br",
+                                "bs",
+                                "ca",
+                                "ckb",
+                                "cs",
+                                "cy",
+                                "da",
+                                "de",
+                                "dsb",
+                                "el",
+                                "en",
+                                "en-au",
+                                "en-gb",
+                                "eo",
+                                "es",
+                                "es-ar",
+                                "es-co",
+                                "es-mx",
+                                "es-ni",
+                                "es-ve",
+                                "et",
+                                "eu",
+                                "fa",
+                                "fi",
+                                "fr",
+                                "fy",
+                                "ga",
+                                "gd",
+                                "gl",
+                                "he",
+                                "hi",
+                                "hr",
+                                "hsb",
+                                "hu",
+                                "hy",
+                                "ia",
+                                "id",
+                                "ig",
+                                "io",
+                                "is",
+                                "it",
+                                "ja",
+                                "ka",
+                                "kab",
+                                "kk",
+                                "km",
+                                "kn",
+                                "ko",
+                                "ky",
+                                "lb",
+                                "lt",
+                                "lv",
+                                "mk",
+                                "ml",
+                                "mn",
+                                "mr",
+                                "ms",
+                                "my",
+                                "nb",
+                                "ne",
+                                "nl",
+                                "nn",
+                                "os",
+                                "pa",
+                                "pl",
+                                "pt",
+                                "pt-br",
+                                "ro",
+                                "ru",
+                                "sk",
+                                "sl",
+                                "sq",
+                                "sr",
+                                "sr-latn",
+                                "sv",
+                                "sw",
+                                "ta",
+                                "te",
+                                "tg",
+                                "th",
+                                "tk",
+                                "tr",
+                                "tt",
+                                "udm",
+                                "uk",
+                                "ur",
+                                "uz",
+                                "vi",
+                                "zh-hans",
+                                "zh-hant"
+                            ]
+                        }
+                    }
+                ],
+                "tags": [
+                    "docs"
+                ],
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "basicAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/vnd.oai.openapi": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            },
+                            "application/yaml": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            },
+                            "application/vnd.oai.openapi+json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            },
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/pattern-service/v1/pattern_instances/": {
+            "get": {
+                "operationId": "pattern_instances_list",
+                "description": "Retrieve information about all pattern instances.",
+                "tags": [
+                    "pattern_instances"
+                ],
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "basicAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/PatternInstance"
+                                    }
+                                },
+                                "examples": {
+                                    "SamplePatternInstanceResponse": {
+                                        "value": [
+                                            {
+                                                "id": 1,
+                                                "url": "/api/pattern-service/v1/pattern_instances/1/",
+                                                "related": {
+                                                    "pattern": "/api/pattern-service/v1/patterns/1/"
+                                                },
+                                                "summary_fields": {
+                                                    "pattern": {
+                                                        "id": 1
+                                                    }
+                                                },
+                                                "created": "2025-06-25T01:02:03Z",
+                                                "created_by": null,
+                                                "modified": "2025-06-25T01:02:03Z",
+                                                "modified_by": null,
+                                                "organization_id": 1,
+                                                "controller_project_id": null,
+                                                "controller_ee_id": null,
+                                                "controller_labels": [],
+                                                "credentials": {
+                                                    "ee": 1,
+                                                    "project": 2
+                                                },
+                                                "executors": {
+                                                    "teams": [
+                                                        1,
+                                                        2
+                                                    ],
+                                                    "users": [
+                                                        1,
+                                                        2,
+                                                        3
+                                                    ]
+                                                },
+                                                "pattern": 1
+                                            }
+                                        ],
+                                        "summary": "Sample pattern instance response"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "operationId": "pattern_instances_create",
+                "description": "Create an instance of an Ansible pattern, creating its defined AAP resources and saving their IDs.",
+                "tags": [
+                    "pattern_instances"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatternInstance"
+                            },
+                            "examples": {
+                                "SamplePatternInstancePOST": {
+                                    "value": {
+                                        "organization_id": 1,
+                                        "credentials": {
+                                            "ee": 1,
+                                            "project": 2
+                                        },
+                                        "executors": {
+                                            "teams": [
+                                                1,
+                                                2
+                                            ],
+                                            "users": [
+                                                1,
+                                                2,
+                                                3
+                                            ]
+                                        },
+                                        "pattern": 1
+                                    },
+                                    "summary": "Sample pattern instance POST"
+                                }
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatternInstance"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatternInstance"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "basicAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PatternInstance"
+                                },
+                                "examples": {
+                                    "SamplePatternInstancePOSTResponse": {
+                                        "value": {
+                                            "message": "Pattern instance creation initiated. Check task status for progress.",
+                                            "task_id": 1
+                                        },
+                                        "summary": "Sample pattern instance POST response"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/pattern-service/v1/pattern_instances/{id}/": {
+            "get": {
+                "operationId": "pattern_instances_retrieve",
+                "description": "Retrieve information about a single pattern instance by ID.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this pattern instance.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "pattern_instances"
+                ],
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "basicAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PatternInstance"
+                                },
+                                "examples": {
+                                    "SamplePatternInstanceResponse": {
+                                        "value": {
+                                            "id": 1,
+                                            "url": "/api/pattern-service/v1/pattern_instances/1/",
+                                            "related": {
+                                                "pattern": "/api/pattern-service/v1/patterns/1/"
+                                            },
+                                            "summary_fields": {
+                                                "pattern": {
+                                                    "id": 1
+                                                }
+                                            },
+                                            "created": "2025-06-25T01:02:03Z",
+                                            "created_by": null,
+                                            "modified": "2025-06-25T01:02:03Z",
+                                            "modified_by": null,
+                                            "organization_id": 1,
+                                            "controller_project_id": null,
+                                            "controller_ee_id": null,
+                                            "controller_labels": [],
+                                            "credentials": {
+                                                "ee": 1,
+                                                "project": 2
+                                            },
+                                            "executors": {
+                                                "teams": [
+                                                    1,
+                                                    2
+                                                ],
+                                                "users": [
+                                                    1,
+                                                    2,
+                                                    3
+                                                ]
+                                            },
+                                            "pattern": 1
+                                        },
+                                        "summary": "Sample pattern instance response"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "pattern_instances_destroy",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this pattern instance.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "pattern_instances"
+                ],
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "basicAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/api/pattern-service/v1/patterns/": {
+            "get": {
+                "operationId": "patterns_list",
+                "description": "Retrieve information about all Ansible patterns added to the service.",
+                "tags": [
+                    "patterns"
+                ],
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "basicAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Pattern"
+                                    }
+                                },
+                                "examples": {
+                                    "SamplePatternGETResponse": {
+                                        "value": [
+                                            {
+                                                "id": 1,
+                                                "url": "/api/pattern-service/v1/patterns/1/",
+                                                "related": {},
+                                                "summary_fields": {},
+                                                "created": "2025-06-25T01:02:03Z",
+                                                "created_by": null,
+                                                "modified": "2025-06-25T01:02:03Z",
+                                                "modified_by": null,
+                                                "collection_name": "mynamespace.mycollection",
+                                                "collection_version": "1.0.0",
+                                                "collection_version_uri": null,
+                                                "pattern_name": "mypattern",
+                                                "pattern_definition": null
+                                            }
+                                        ],
+                                        "summary": "Sample pattern GET response"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "operationId": "patterns_create",
+                "description": "Add an Ansible pattern to the service.",
+                "tags": [
+                    "patterns"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Pattern"
+                            },
+                            "examples": {
+                                "SamplePatternPOST": {
+                                    "value": {
+                                        "collection_name": "mynamespace.mycollection",
+                                        "collection_version": "1.0.0",
+                                        "pattern_name": "mypattern"
+                                    },
+                                    "summary": "Sample pattern POST"
+                                }
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Pattern"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Pattern"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "basicAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Pattern"
+                                },
+                                "examples": {
+                                    "SamplePatternPOSTResponse": {
+                                        "value": {
+                                            "message": "Pattern creation initiated. Check task status for progress.",
+                                            "task_id": 1
+                                        },
+                                        "summary": "Sample pattern POST response"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/pattern-service/v1/patterns/{id}/": {
+            "get": {
+                "operationId": "patterns_retrieve",
+                "description": "Retrieve information about a single Ansible pattern by ID.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this pattern.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "patterns"
+                ],
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "basicAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Pattern"
+                                },
+                                "examples": {
+                                    "SamplePatternGETResponse": {
+                                        "value": {
+                                            "id": 1,
+                                            "url": "/api/pattern-service/v1/patterns/1/",
+                                            "related": {},
+                                            "summary_fields": {},
+                                            "created": "2025-06-25T01:02:03Z",
+                                            "created_by": null,
+                                            "modified": "2025-06-25T01:02:03Z",
+                                            "modified_by": null,
+                                            "collection_name": "mynamespace.mycollection",
+                                            "collection_version": "1.0.0",
+                                            "collection_version_uri": null,
+                                            "pattern_name": "mypattern",
+                                            "pattern_definition": null
+                                        },
+                                        "summary": "Sample pattern GET response"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "patterns_destroy",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this pattern.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "patterns"
+                ],
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "basicAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/api/pattern-service/v1/tasks/": {
+            "get": {
+                "operationId": "tasks_list",
+                "description": "Retrieve information about all tasks created by the service.",
+                "tags": [
+                    "tasks"
+                ],
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "basicAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Task"
+                                    }
+                                },
+                                "examples": {
+                                    "SampleTaskResponse": {
+                                        "value": [
+                                            {
+                                                "id": 1,
+                                                "url": "/api/pattern-service/v1/tasks/1/",
+                                                "related": {},
+                                                "summary_fields": {},
+                                                "created": "2025-06-25T01:02:03Z",
+                                                "created_by": null,
+                                                "modified": "2025-06-25T01:02:03Z",
+                                                "modified_by": null,
+                                                "status": "Running",
+                                                "details": {
+                                                    "some": "data"
+                                                }
+                                            }
+                                        ],
+                                        "summary": "Sample task response"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/pattern-service/v1/tasks/{id}/": {
+            "get": {
+                "operationId": "tasks_retrieve",
+                "description": "Retrieve information about a single task by ID.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this task.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "tasks"
+                ],
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "basicAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Task"
+                                },
+                                "examples": {
+                                    "SampleTaskResponse": {
+                                        "value": {
+                                            "id": 1,
+                                            "url": "/api/pattern-service/v1/tasks/1/",
+                                            "related": {},
+                                            "summary_fields": {},
+                                            "created": "2025-06-25T01:02:03Z",
+                                            "created_by": null,
+                                            "modified": "2025-06-25T01:02:03Z",
+                                            "modified_by": null,
+                                            "status": "Running",
+                                            "details": {
+                                                "some": "data"
+                                            }
+                                        },
+                                        "summary": "Sample task response"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "Automation": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "url": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "related": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        },
+                        "readOnly": true
+                    },
+                    "summary_fields": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "object",
+                            "additionalProperties": {}
+                        },
+                        "readOnly": true
+                    },
+                    "created": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "description": "The date/time this resource was created."
+                    },
+                    "created_by": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "nullable": true,
+                        "description": "The user who created this resource."
+                    },
+                    "modified": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "description": "The date/time this resource was created."
+                    },
+                    "modified_by": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "nullable": true,
+                        "description": "The user who last modified this resource."
+                    },
+                    "automation_type": {
+                        "$ref": "#/components/schemas/AutomationTypeEnum"
+                    },
+                    "automation_id": {
+                        "type": "integer"
+                    },
+                    "primary": {
+                        "type": "boolean"
+                    },
+                    "pattern_instance": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "automation_id",
+                    "automation_type",
+                    "pattern_instance"
+                ]
+            },
+            "AutomationTypeEnum": {
+                "enum": [
+                    "job_template"
+                ],
+                "type": "string",
+                "description": "* `job_template` - Job template"
+            },
+            "ControllerLabel": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "url": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "related": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        },
+                        "readOnly": true
+                    },
+                    "summary_fields": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "object",
+                            "additionalProperties": {}
+                        },
+                        "readOnly": true
+                    },
+                    "created": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "description": "The date/time this resource was created."
+                    },
+                    "created_by": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "nullable": true,
+                        "description": "The user who created this resource."
+                    },
+                    "modified": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "description": "The date/time this resource was created."
+                    },
+                    "modified_by": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "nullable": true,
+                        "description": "The user who last modified this resource."
+                    },
+                    "label_id": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "label_id"
+                ]
+            },
+            "Pattern": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "url": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "related": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        },
+                        "readOnly": true
+                    },
+                    "summary_fields": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "object",
+                            "additionalProperties": {}
+                        },
+                        "readOnly": true
+                    },
+                    "created": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "description": "The date/time this resource was created."
+                    },
+                    "created_by": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "nullable": true,
+                        "description": "The user who created this resource."
+                    },
+                    "modified": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "description": "The date/time this resource was created."
+                    },
+                    "modified_by": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "nullable": true,
+                        "description": "The user who last modified this resource."
+                    },
+                    "collection_name": {
+                        "type": "string",
+                        "maxLength": 200
+                    },
+                    "collection_version": {
+                        "type": "string",
+                        "maxLength": 50
+                    },
+                    "collection_version_uri": {
+                        "type": "string",
+                        "readOnly": true,
+                        "nullable": true
+                    },
+                    "pattern_name": {
+                        "type": "string",
+                        "maxLength": 200
+                    },
+                    "pattern_definition": {
+                        "readOnly": true,
+                        "nullable": true
+                    }
+                },
+                "required": [
+                    "collection_name",
+                    "collection_version",
+                    "pattern_name"
+                ]
+            },
+            "PatternInstance": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "url": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "related": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        },
+                        "readOnly": true
+                    },
+                    "summary_fields": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "object",
+                            "additionalProperties": {}
+                        },
+                        "readOnly": true
+                    },
+                    "created": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "description": "The date/time this resource was created."
+                    },
+                    "created_by": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "nullable": true,
+                        "description": "The user who created this resource."
+                    },
+                    "modified": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "description": "The date/time this resource was created."
+                    },
+                    "modified_by": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "nullable": true,
+                        "description": "The user who last modified this resource."
+                    },
+                    "organization_id": {
+                        "type": "integer"
+                    },
+                    "controller_project_id": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "nullable": true
+                    },
+                    "controller_ee_id": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "nullable": true
+                    },
+                    "controller_labels": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "readOnly": true
+                    },
+                    "credentials": {},
+                    "executors": {
+                        "nullable": true
+                    },
+                    "pattern": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "credentials",
+                    "organization_id",
+                    "pattern"
+                ]
+            },
+            "StatusEnum": {
+                "enum": [
+                    "Initiated",
+                    "Running",
+                    "Completed",
+                    "Failed"
+                ],
+                "type": "string",
+                "description": "* `Initiated` - Initiated\n* `Running` - Running\n* `Completed` - Completed\n* `Failed` - Failed"
+            },
+            "Task": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "url": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "related": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        },
+                        "readOnly": true
+                    },
+                    "summary_fields": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "object",
+                            "additionalProperties": {}
+                        },
+                        "readOnly": true
+                    },
+                    "created": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "description": "The date/time this resource was created."
+                    },
+                    "created_by": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "nullable": true,
+                        "description": "The user who created this resource."
+                    },
+                    "modified": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "description": "The date/time this resource was created."
+                    },
+                    "modified_by": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "nullable": true,
+                        "description": "The user who last modified this resource."
+                    },
+                    "status": {
+                        "$ref": "#/components/schemas/StatusEnum"
+                    },
+                    "details": {
+                        "nullable": true
+                    }
+                },
+                "required": [
+                    "status"
+                ]
+            }
+        },
+        "securitySchemes": {
+            "basicAuth": {
+                "type": "http",
+                "scheme": "basic"
+            },
+            "cookieAuth": {
+                "type": "apiKey",
+                "in": "cookie",
+                "name": "sessionid"
+            }
+        }
+    }
+}

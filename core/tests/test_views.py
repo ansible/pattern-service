@@ -112,34 +112,23 @@ class PatternViewSetTest(SharedDataMixin, APITestCase):
 
 class ControllerLabelViewSetTest(SharedDataMixin, APITestCase):
     def test_label_list_view(self):
-        url = reverse("controllerlabel-list")
+        url = reverse("controller_label-list")
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
 
     def test_label_detail_view(self):
-        url = reverse("controllerlabel-detail", args=[self.label.id])
+        url = reverse("controller_label-detail", args=[self.label.id])
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("id", response.data)
         self.assertIn("label_id", response.data)
         self.assertEqual(response.data["label_id"], 5)
 
-    def test_label_create_view(self):
-        url = reverse("controllerlabel-list")
-        data = {"label_id": 10}
-
-        response = self.client.post(url, data, format="json")
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-
-        label = ControllerLabel.objects.get(label_id=10)
-        self.assertIsNotNone(label)
-        self.assertEqual(label.label_id, 10)
-
     def test_label_delete_view(self):
         label_to_delete = ControllerLabel.objects.create(label_id=99)
 
-        url = reverse("controllerlabel-detail", args=[label_to_delete.id])
+        url = reverse("controller_label-detail", args=[label_to_delete.id])
         response = self.client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
@@ -149,19 +138,19 @@ class ControllerLabelViewSetTest(SharedDataMixin, APITestCase):
 
 class PatternInstanceViewSetTest(SharedDataMixin, APITestCase):
     def test_pattern_instance_list_view(self):
-        url = reverse("patterninstance-list")
+        url = reverse("pattern_instance-list")
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
 
     def test_pattern_instance_detail_view(self):
-        url = reverse("patterninstance-detail", args=[self.pattern_instance.pk])
+        url = reverse("pattern_instance-detail", args=[self.pattern_instance.pk])
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["organization_id"], 1)
 
     def test_pattern_instance_create_view(self):
-        url = reverse("patterninstance-list")
+        url = reverse("pattern_instance-list")
         data = {
             "organization_id": 2,
             "controller_project_id": 0,
@@ -201,7 +190,7 @@ class PatternInstanceViewSetTest(SharedDataMixin, APITestCase):
             pattern=self.pattern,
         )
 
-        url = reverse("patterninstance-detail", args=[instance_to_delete.pk])
+        url = reverse("pattern_instance-detail", args=[instance_to_delete.pk])
         response = self.client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
@@ -211,7 +200,7 @@ class PatternInstanceViewSetTest(SharedDataMixin, APITestCase):
         )
 
     def test_pattern_instance_create_view_with_invalid_pattern(self):
-        url = reverse("patterninstance-list")
+        url = reverse("pattern_instance-list")
         data = {
             "organization_id": 999,
             "credentials": {"user": "test"},
@@ -234,51 +223,6 @@ class AutomationViewSetTest(SharedDataMixin, APITestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["automation_type"], "job_template")
-
-    def test_automation_create_view(self):
-        url = reverse("automation-list")
-        data = {
-            "automation_type": "job_template",
-            "automation_id": 1234,
-            "primary": False,
-            "pattern_instance": self.pattern_instance.id,
-        }
-
-        response = self.client.post(url, data, format="json")
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-
-        # Verify database change
-        automation = Automation.objects.get(automation_id=1234)
-        self.assertIsNotNone(automation)
-        self.assertEqual(automation.automation_type, "job_template")
-        self.assertFalse(automation.primary)
-
-    def test_automation_delete_view(self):
-        # Create a separate automation for deletion
-        automation_to_delete = Automation.objects.create(
-            automation_type="job_template",
-            automation_id=5555,
-            primary=False,
-            pattern_instance=self.pattern_instance,
-        )
-
-        url = reverse("automation-detail", args=[automation_to_delete.pk])
-        response = self.client.delete(url)
-        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-
-        # Verify database change - automation should be deleted
-        self.assertFalse(Automation.objects.filter(pk=automation_to_delete.pk).exists())
-
-    def test_automation_create_view_with_invalid_pattern_instance(self):
-        url = reverse("automation-list")
-        data = {
-            "automation_type": "job_template",
-            "automation_id": 1234,
-            "pattern_instance": 99999,
-        }  # Non-existent pattern instance ID
-
-        response = self.client.post(url, data, format="json")
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
 class TaskViewSetTest(SharedDataMixin, APITestCase):

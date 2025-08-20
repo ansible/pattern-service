@@ -37,6 +37,10 @@ LOGGING = {
             "level": "INFO",
         },
         "dispatcherd": {"handlers": ["console"], "level": "INFO"},
+        "drf_spectacular": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+        },
     },
 }
 

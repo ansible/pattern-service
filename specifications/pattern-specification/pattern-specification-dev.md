@@ -34,10 +34,10 @@ Individual patterns that implement this specification are the responsibility of 
 
 ### `meta/pattern.json`
 
-The pattern definition meta file is the machine-readable entry point for creating an instance of the pattern in AAP. It defines the resources required to execute the pattern, such as a controller project, execution environment, job templates, and labels. The pattern definition also includes metadata about the pattern to enable its discovery and use, such as its title, audience, and tags. A [JSON schema](https://github.com/ansible/pattern-service/blob/main/specifications/pattern_specification.json) has been published to aid with validation of the pattern definition file.
+The pattern definition meta file is the machine-readable entry point for creating an instance of the pattern in AAP. It defines the resources required to execute the pattern, such as a controller project, execution environment, job templates, and labels. The pattern definition also includes metadata about the pattern to enable its discovery and use, such as its title, audience, and tags. A [JSON schema](https://github.com/ansible/pattern-service/blob/main/specifications/pattern-schema/pattern-schema-dev.json) has been published to aid with validation of the pattern definition file.
 
 - A pattern **MUST** include exactly one meta file defining the pattern metadata and AAP resources it requires.
-- The pattern definition meta file **MUST** be a valid instance of the [Ansible pattern schema](https://github.com/ansible/pattern-service/blob/main/specifications/pattern_specification.json).
+- The pattern definition meta file **MUST** be a valid instance of the [Ansible pattern schema](https://github.com/ansible/pattern-service/blob/main/specifications/pattern-schema/pattern-schema-dev.json).
 
 ### `README.md`
 

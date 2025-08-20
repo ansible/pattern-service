@@ -18,8 +18,8 @@ from dynaconf import Dynaconf
 
 def override_dispatcher_settings(loaded_settings: Dynaconf) -> None:
     databases = loaded_settings.get("DATABASES", {})
-    if databases and "default" not in databases:
-        raise ImproperlyConfigured("DATABASES settings must contain a 'default' key")
+    if databases and "dispatcher" not in databases:
+        raise ImproperlyConfigured("DATABASES settings must contain a 'dispatcher' key")
 
     db_host = loaded_settings.get("DB_HOST", "127.0.0.1")
     db_port = loaded_settings.get("DB_PORT", 5432)
@@ -32,7 +32,7 @@ def override_dispatcher_settings(loaded_settings: Dynaconf) -> None:
     db_sslkey = loaded_settings.get("DB_SSLKEY", default="")
     db_sslrootcert = loaded_settings.get("DB_SSLROOTCERT", default="")
 
-    databases["default"] = {
+    databases["dispatcher"] = {
         "ENGINE": "django.db.backends.postgresql",
         "HOST": db_host,
         "PORT": db_port,
