@@ -19,7 +19,7 @@ class PatternSerializer(CommonModelSerializer):
             "collection_version_uri",
             "pattern_name",
             "pattern_definition",
-            "is_it_orange_juice",
+            "is_orange_juice",
         ]
         read_only_fields = ["pattern_definition", "collection_version_uri"]
 
