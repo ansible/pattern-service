@@ -93,7 +93,6 @@ env_list = ["check", "format", "lint", "type"]
 
 [tool.tox.env_run_base]
 package = "wheel"
-deps = ["freezegun", "pytest-django"]
 
 [tool.tox.env_run_base.set_env]
 DJANGO_SETTINGS_MODULE = "pattern_service.settings"
@@ -101,21 +100,21 @@ PATTERN_SERVICE_MODE = "testing"
 
 [tool.tox.env.py311]
 description = "run tests using Python 3.11"
-deps = [ "pytest-cov", "pytest-django" ]
+deps = [ "-rrequirements/requirements-test.txt" ]
 commands = [
     [ "pytest", "--cov=.", "--cov-append", "--cov-report=xml", "-vvv" ]
 ]
 
 [tool.tox.env.py312]
 description = "run tests using Python 3.12"
-deps = [ "pytest-cov", "pytest-django" ]
+deps = [ "-rrequirements/requirements-test.txt" ]
 commands = [
     [ "pytest", "--cov=.", "--cov-append", "--cov-report=xml", "-vvv" ]
 ]
 
 [tool.tox.env.py313]
 description = "run tests using Python 3.13"
-deps = [ "pytest-cov", "pytest-django" ]
+deps = [ "-rrequirements/requirements-test.txt" ]
 commands = [
     [ "pytest", "--cov=.", "--cov-append", "--cov-report=xml", "-vvv" ]
 ]
