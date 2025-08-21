@@ -43,7 +43,7 @@ jobs:
           echo "$PR_NUMBER=$(cat pr-number.txt)" >> $GITHUB_ENV
 
       - name: Get PR info
-        uses: octokit/request-action@v2
+        uses: octokit/request-action@v2.x
         id: pr_info
         with:
           route: GET /repos/{repo}/pulls/{number}
