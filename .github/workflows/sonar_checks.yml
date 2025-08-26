@@ -40,7 +40,7 @@ jobs:
       - name: Extract PR number
         run: |
           cat pr-number.txt
-          echo "$PR_NUMBER=$(cat pr-number.txt)" >> $GITHUB_ENV
+          echo "PR_NUMBER=$(cat pr-number.txt)" >> $GITHUB_ENV
 
       - name: Get PR info
         uses: octokit/request-action@v2.x

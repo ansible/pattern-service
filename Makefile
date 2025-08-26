@@ -73,7 +73,7 @@ requirements: ## Generate requirements.txt files from pyproject.toml
 test: ## Run tests with a postgres database using docker-compose
 	$(COMPOSE_COMMAND) -f tools/podman/compose-test.yaml $(COMPOSE_OPTS) up -d
 	-rm coverage.xml
-	-tox -e test
+	tox -e test
 	$(COMPOSE_COMMAND) -f tools/podman/compose-test.yaml $(COMPOSE_OPTS) down
 
 # -------------------------------------
