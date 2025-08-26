@@ -86,7 +86,7 @@ class Automation(CommonModel):
 
 class Task(CommonModel):
     class Meta:
-        app_label = "core"
+        app_label = "core1"
         ordering = ["id"]
 
     class Status(models.TextChoices):
