@@ -131,7 +131,8 @@ class PatternTaskTest(SharedDataMixin, TestCase):
         )
 
     @patch(
-        "core.tasks.pattern.download_collection", side_effect=Exception("Download failed")
+        "core.tasks.pattern.download_collection",
+        side_effect=Exception("Download failed"),
     )
     def test_pattern_create_handles_download_failure(self, mock_download):
         pattern_create(self.pattern.id, self.task.id)
