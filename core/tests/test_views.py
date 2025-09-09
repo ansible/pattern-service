@@ -62,7 +62,7 @@ class PatternViewSetTest(SharedDataMixin, APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["collection_name"], "mynamespace.mycollection")
 
-    @patch("core.viewas.submit_task")
+    @patch("core.views.submit_task")
     def test_pattern_create_view(self, mock_submit_task):
         url = reverse("pattern-list")
         data = {
@@ -155,7 +155,7 @@ class PatternInstanceViewSetTest(SharedDataMixin, APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["organization_id"], 1)
 
-    @patch("core.viewas.submit_task")
+    @patch("core.views.submit_task")
     def test_pattern_instance_create_view(self, mock_submit_task):
         url = reverse("pattern_instance-list")
         data = {
