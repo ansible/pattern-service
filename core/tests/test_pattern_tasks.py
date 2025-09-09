@@ -82,7 +82,7 @@ class SharedDataMixin:
 
 class PatternTaskTest(SharedDataMixin, TestCase):
     @patch("core.models.Task.set_status", autospec=True, wraps=Task.set_status)
-    @patch("core.task_runner.download_collection")
+    @patch("core.tasks.pattern.download_collection")
     def test_pattern_create_success(self, mock_download, mock_update_status):
         temp_dir_path = self.create_temp_collection_dir()
         mock_download.return_value.__enter__.return_value = temp_dir_path
@@ -115,7 +115,7 @@ class PatternTaskTest(SharedDataMixin, TestCase):
         self.assertEqual(self.pattern.pattern_definition, {"mock_key": "mock_value"})
 
     @patch("core.models.Task.set_status", autospec=True)
-    @patch("core.task_runner.download_collection", side_effect=FileNotFoundError)
+    @patch("core.tasks.pattern.download_collection", side_effect=FileNotFoundError)
     def test_pattern_create_file_not_found(self, mock_download, mock_update_status):
         pattern = Pattern.objects.create(
             collection_name="demo.collection",
@@ -131,7 +131,7 @@ class PatternTaskTest(SharedDataMixin, TestCase):
         )
 
     @patch(
-        "core.task_runner.download_collection", side_effect=Exception("Download failed")
+        "core.tasks.pattern.download_collection", side_effect=Exception("Download failed")
     )
     def test_pattern_create_handles_download_failure(self, mock_download):
         pattern_create(self.pattern.id, self.task.id)
@@ -141,13 +141,13 @@ class PatternTaskTest(SharedDataMixin, TestCase):
 
 
 class PatternInstanceTaskTest(SharedDataMixin, TestCase):
-    @patch("core.task_runner.get_http_session")
-    @patch("core.task_runner.assign_execute_roles")
-    @patch("core.task_runner.save_instance_state")
-    @patch("core.task_runner.create_job_templates")
-    @patch("core.task_runner.create_labels")
-    @patch("core.task_runner.create_execution_environment")
-    @patch("core.task_runner.create_project")
+    @patch("core.tasks.pattern.get_http_session")
+    @patch("core.tasks.pattern.assign_execute_roles")
+    @patch("core.tasks.pattern.save_instance_state")
+    @patch("core.tasks.pattern.create_job_templates")
+    @patch("core.tasks.pattern.create_labels")
+    @patch("core.tasks.pattern.create_execution_environment")
+    @patch("core.tasks.pattern.create_project")
     @patch("core.models.Task.set_status", autospec=True)
     def test_run_pattern_instance_success(
         self,
@@ -198,12 +198,12 @@ class PatternInstanceTaskTest(SharedDataMixin, TestCase):
         mock_save_instance.assert_called_once()
         mock_assign_roles.assert_called_once()
 
-    @patch("core.task_runner.assign_execute_roles")
-    @patch("core.task_runner.save_instance_state")
-    @patch("core.task_runner.create_job_templates")
-    @patch("core.task_runner.create_labels")
-    @patch("core.task_runner.create_execution_environment")
-    @patch("core.task_runner.create_project")
+    @patch("core.tasks.pattern.assign_execute_roles")
+    @patch("core.tasks.pattern.save_instance_state")
+    @patch("core.tasks.pattern.create_job_templates")
+    @patch("core.tasks.pattern.create_labels")
+    @patch("core.tasks.pattern.create_execution_environment")
+    @patch("core.tasks.pattern.create_project")
     @patch("core.models.Task.set_status", autospec=True)
     def test_failure_path(
         self,
