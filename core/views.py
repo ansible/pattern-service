@@ -1,6 +1,7 @@
 import uuid
 
 from ansible_base.lib.utils.views.ansible_base import AnsibleBaseView
+from dispatcherd.publish import submit_task
 from drf_spectacular.utils import extend_schema
 from drf_spectacular.utils import extend_schema_view
 from rest_framework import status
@@ -21,7 +22,10 @@ from core.serializers import ControllerLabelSerializer
 from core.serializers import PatternInstanceSerializer
 from core.serializers import PatternSerializer
 from core.serializers import TaskSerializer
+from core.tasks.common import DISPATCHERD_DEFAULT_CHANNEL
 from core.tasks.demo import sumbit_hello_world
+from core.tasks.pattern import pattern_create
+from core.tasks.pattern import pattern_instance_create
 
 
 class CoreViewSet(AnsibleBaseView):
@@ -59,6 +63,15 @@ class PatternViewSet(CoreViewSet, ModelViewSet):
 
         task = Task.objects.create(
             status="Initiated", details={"model": "Pattern", "id": pattern.id}
+        )
+
+        submit_task(
+            pattern_create,
+            queue=DISPATCHERD_DEFAULT_CHANNEL,
+            args=(
+                pattern.id,
+                task.id,
+            ),
         )
 
         headers = self.get_success_headers(serializer.data)
@@ -129,6 +142,14 @@ class PatternInstanceViewSet(CoreViewSet, ModelViewSet):
             status="Initiated", details={"model": "PatternInstance", "id": instance.id}
         )
 
+        submit_task(
+            pattern_instance_create,
+            queue=DISPATCHERD_DEFAULT_CHANNEL,
+            args=(
+                instance.id,
+                task.id,
+            ),
+        )
         headers = self.get_success_headers(serializer.data)
         return Response(
             {

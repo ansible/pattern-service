@@ -14,8 +14,8 @@ from core.models import ControllerLabel
 from core.models import Pattern
 from core.models import PatternInstance
 from core.models import Task
-from core.task_runner import run_pattern_instance_task
-from core.task_runner import run_pattern_task
+from core.tasks.pattern import pattern_create
+from core.tasks.pattern import pattern_instance_create
 
 
 class SharedDataMixin:
@@ -83,11 +83,11 @@ class SharedDataMixin:
 class PatternTaskTest(SharedDataMixin, TestCase):
     @patch("core.models.Task.set_status", autospec=True, wraps=Task.set_status)
     @patch("core.task_runner.download_collection")
-    def test_run_pattern_task_success(self, mock_download, mock_update_status):
+    def test_pattern_create_success(self, mock_download, mock_update_status):
         temp_dir_path = self.create_temp_collection_dir()
         mock_download.return_value.__enter__.return_value = temp_dir_path
 
-        run_pattern_task(self.pattern.id, self.task.id)
+        pattern_create(self.pattern.id, self.task.id)
 
         expected_calls = [
             (self.task, "Running", {"info": "Processing pattern"}),
@@ -116,7 +116,7 @@ class PatternTaskTest(SharedDataMixin, TestCase):
 
     @patch("core.models.Task.set_status", autospec=True)
     @patch("core.task_runner.download_collection", side_effect=FileNotFoundError)
-    def test_run_pattern_task_file_not_found(self, mock_download, mock_update_status):
+    def test_pattern_create_file_not_found(self, mock_download, mock_update_status):
         pattern = Pattern.objects.create(
             collection_name="demo.collection",
             collection_version="1.0.0",
@@ -124,7 +124,7 @@ class PatternTaskTest(SharedDataMixin, TestCase):
         )
         task = Task.objects.create(status="Initiated", details={})
 
-        run_pattern_task(pattern.id, task.id)
+        pattern_create(pattern.id, task.id)
 
         mock_update_status.assert_called_with(
             task, "Failed", {"error": "Pattern definition not found."}
@@ -133,8 +133,8 @@ class PatternTaskTest(SharedDataMixin, TestCase):
     @patch(
         "core.task_runner.download_collection", side_effect=Exception("Download failed")
     )
-    def test_run_pattern_task_handles_download_failure(self, mock_download):
-        run_pattern_task(self.pattern.id, self.task.id)
+    def test_pattern_create_handles_download_failure(self, mock_download):
+        pattern_create(self.pattern.id, self.task.id)
         self.task.refresh_from_db()
         self.assertEqual(self.task.status, "Failed")
         self.assertIn("Download failed", self.task.details.get("error", ""))
@@ -168,7 +168,7 @@ class PatternInstanceTaskTest(SharedDataMixin, TestCase):
         mock_create_labels.side_effect = [[]]
         mock_create_jts.side_effect = [[]]
 
-        run_pattern_instance_task(
+        pattern_instance_create(
             instance_id=self.pattern_instance.id,
             task_id=self.task.id,
         )
@@ -215,7 +215,7 @@ class PatternInstanceTaskTest(SharedDataMixin, TestCase):
         mock_create_project.side_effect = RuntimeError("error")
 
         # No exception should propagate because the task function swallows it
-        run_pattern_instance_task(
+        pattern_instance_create(
             instance_id=self.pattern_instance.id,
             task_id=self.task.id,
         )
