@@ -1,4 +1,5 @@
 import contextlib
+import hashlib
 import logging
 import os
 import random
@@ -51,6 +52,22 @@ def build_collection_uri(collection_name: str, version: str) -> str:
     return urljoin(f"{settings.AAP_URL}/", f"{path}/{filename}")
 
 
+def aap_resource_info_hash(
+    resource_name: str,
+    collection_name: str,
+    pattern_name: str,
+    version: str,
+    organization_id: int,
+) -> str:
+    """
+    Generates a unique name for a resource.
+    """
+    hash = hashlib.sha256(
+        f"{collection_name}.{pattern_name}.{version}.{organization_id}".encode()
+    ).hexdigest()[:8]
+    return f"{resource_name} {collection_name}.{pattern_name} {hash}"
+
+
 @contextlib.contextmanager
 def download_collection(collection_name: str, version: str) -> Iterator[str]:
     """
@@ -96,6 +113,14 @@ def create_project(
         The created project ID.
     """
     project_def = pattern.pattern_definition["aap_resources"]["controller_project"]
+    # Add unique name to the project definition
+    project_def["name"] = aap_resource_info_hash(
+        project_def["name"],
+        pattern.collection_name,
+        pattern.pattern_name,
+        pattern.collection_version,
+        instance.organization_id,
+    )
     project_def.update(
         {
             "organization": instance.organization_id,
@@ -123,6 +148,14 @@ def create_execution_environment(
     """
     ee_def = pattern_def["aap_resources"]["controller_execution_environment"]
     image_name = ee_def.pop("image_name")
+    # Add unique name to the ee definition
+    ee_def["name"] = aap_resource_info_hash(
+        ee_def["name"],
+        ee_def["collection_name"],
+        ee_def["pattern_name"],
+        ee_def["collection_version"],
+        instance.organization_id,
+    )
     ee_def.update(
         {
             "organization": instance.organization_id,
@@ -138,7 +171,10 @@ def create_execution_environment(
 
 
 def create_labels(
-    session: requests.Session, instance: PatternInstance, pattern_def: Dict[str, Any]
+    session: requests.Session,
+    instance: PatternInstance,
+    pattern: Pattern,
+    pattern_def: Dict[str, Any],
 ) -> List[ControllerLabel]:
     """
     Creates controller labels and returns model instances.
@@ -149,8 +185,19 @@ def create_labels(
         List of ControllerLabel model instances.
     """
     labels = []
+
     for name in pattern_def["aap_resources"]["controller_labels"]:
-        label_def = {"name": name, "organization": instance.organization_id}
+        # Add unique name to the label definition
+        label_def = {
+            "name": aap_resource_info_hash(
+                name,
+                pattern.collection_name,
+                pattern.pattern_name,
+                pattern.collection_version,
+                instance.organization_id,
+            )
+        }
+        label_def.update({"organization": instance.organization_id})
         logger.debug(f"Creating label with definition: {label_def}")
 
         results = post(session, "/api/controller/v2/labels/", label_def)
@@ -163,6 +210,7 @@ def create_labels(
 def create_job_templates(
     session: requests.Session,
     instance: PatternInstance,
+    pattern: Pattern,
     pattern_def: Dict[str, Any],
     project_id: int,
     ee_id: int,
@@ -186,6 +234,14 @@ def create_job_templates(
 
         jt_payload = {
             **jt,
+            # Add unique name to the job template definition
+            "name": aap_resource_info_hash(
+                jt["name"],
+                pattern.collection_name,
+                pattern.pattern_name,
+                pattern.collection_version,
+                instance.organization_id,
+            ),
             "organization": instance.organization_id,
             "project": project_id,
             "execution_environment": ee_id,
