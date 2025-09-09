@@ -62,8 +62,7 @@ class PatternViewSetTest(SharedDataMixin, APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["collection_name"], "mynamespace.mycollection")
 
-    @patch("core.views.submit_task")
-    def test_pattern_create_view(self, mock_submit_task):
+    def test_pattern_create_view(self):
         url = reverse("pattern-list")
         data = {
             "collection_name": "new.namespace.collection",
@@ -72,7 +71,9 @@ class PatternViewSetTest(SharedDataMixin, APITestCase):
             "pattern_name": "new_pattern",
         }
 
-        response = self.client.post(url, data, format="json")
+        with patch("core.views.submit_task") as mock_submit_task:
+            response = self.client.post(url, data, format="json")
+            mock_submit_task.assert_called_once()
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
 
         # Pattern created
@@ -82,9 +83,6 @@ class PatternViewSetTest(SharedDataMixin, APITestCase):
         # Task ID returned directly
         task_id = response.data.get("task_id")
         self.assertIsInstance(task_id, int)
-
-        # assert dispatcher task created
-        mock_submit_task.assert_called_once()
 
         # Task exists
         task = Task.objects.get(id=task_id)
