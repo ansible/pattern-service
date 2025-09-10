@@ -6,11 +6,11 @@ An Ansible Automation Platform service that automates the deployment (creation a
 
 ## User Guide
 
-To use the pattern service in the local aap-dev environment, please refer to the [User guide](docs/USER_GUIDE.md).
+To use the pattern service in the local aap-dev environment, please refer to the [User guide](https://github.com/ansible/pattern-service/blob/main/docs/USER_GUIDE.md).
 
 ## Contributing
 
-To get started with developing, testing, and building pattern-service, please refer to the [Contributing guide](docs/CONTRIBUTING.md).
+To get started with developing, testing, and building pattern-service, please refer to the [Contributing guide](https://github.com/ansible/pattern-service/blob/main/docs/CONTRIBUTING.md).
 
 ## License
 
