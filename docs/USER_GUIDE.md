@@ -2,8 +2,6 @@
 
 This section walks you through setting up of the complete pattern loading workflow in your AAP environment, including pattern-service, cloud collections, and execution environments (EE).
 
----
-
 ## Prerequisites
 
 * Access to AAP development environment.
@@ -11,22 +9,16 @@ This section walks you through setting up of the complete pattern loading workfl
 * Required tools installed: `ansible-builder`, `podman`, `make`.
 * Admin credentials for PAH (Private Automation Hub).
 
----
-
 ## Steps to Test the Workflow
 
 ### 1. Publish the Latest Pattern-Service Container
 
 Publish the latest container image for the `pattern-service` so it can be used in your AAP development environment.
 
----
-
 ### 2. Run AAP Dev
 
 Run your AAP development environment, pointing to the newly published latest `pattern-service` image.
 For detailed steps on deploying AAP dev with the pattern service, see the AAP-Dev [How-To Guide](https://github.com/ansible/aap-dev/blob/main/docs/how-to-guides/pattern-service.md).
-
----
 
 ### 3. Apply License and Admin Setup
 
@@ -36,8 +28,6 @@ Run the following commands in your AAP dev environment:
 make aap-apply-license
 make aap-admin
 ```
-
----
 
 ### 4. Build, Tag, and Publish the Execution Environment to Private Automation Hub
 The example collection used here is cloud.aws_ops
@@ -68,8 +58,6 @@ podman login localhost:44926 --tls-verify=false
 podman push localhost:44926/cloud/aws_ops-ee:latest --tls-verify=false
 ```
 
----
-
 ### 5. Configure AAP UI
 
 1. **Collections Hub**:
@@ -87,8 +75,6 @@ podman push localhost:44926/cloud/aws_ops-ee:latest --tls-verify=false
 
    * Create a user and a team to assign the Job Template (JT) execute role. Note their **IDs**.
 
----
-
 ### 6. Run the Pattern Service Locally
 
 Bring up the pattern service using Docker Compose:
@@ -96,8 +82,6 @@ Bring up the pattern service using Docker Compose:
 ```bash
 make compose-up
 ```
-
----
 
 ### 7. Create Pattern and Pattern Instance
 
@@ -127,5 +111,3 @@ make compose-up
 ```
 
 > Note: IDs correspond to resources created in previous steps.
-
----
