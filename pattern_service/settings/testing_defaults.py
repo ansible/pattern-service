@@ -5,7 +5,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "insecure"
 
 DB_NAME = "test_pattern_db"
-DB_USER = "postgres"
+DB_USER = "pattern"
 DB_PASSWORD = "insecure"
 
 DATABASES = {
@@ -21,6 +21,31 @@ DATABASES = {
         "NAME": DB_NAME,
     },
 }
+
+DEBUG = True
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "simple": {
+            "format": "{levelname} {name} {lineno} {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "level": DEBUG,
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
+        },
+    },
+    "filters": {"require_debug_false": {"()": "django.utils.log.RequireDebugFalse"}},
+    "loggers": {
+        "dispatcherd": {"handlers": ["console"], "level": "INFO"},
+    },
+}
+
 
 # Base URL of your AAP service
 AAP_URL = "http://localhost:44926"  # or your default URL
