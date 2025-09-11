@@ -39,7 +39,7 @@ make aap-admin
 
 ---
 
-### 4. Build, Tag, and Publish the EE to PAH
+### 4. Build, Tag, and Publish the Execution Environment to Private Automation Hub
 The example collection used here is cloud.aws_ops
 
 From the directory containing the EE definition, run the following steps:
