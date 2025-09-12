@@ -16,7 +16,10 @@ def test_create_pattern():
     assert response.status_code == status.HTTP_202_ACCEPTED
     assert "task_id" in response.data
     assert "message" in response.data
-    assert response.data["message"] == "Pattern creation initiated. Check task status for progress."
+    assert (
+        response.data["message"]
+        == "Pattern creation initiated. Check task status for progress."
+    )
 
 
 @pytest.mark.django_db
@@ -32,4 +35,7 @@ def test_create_pattern_instance():
     assert response.status_code == status.HTTP_202_ACCEPTED
     assert "task_id" in response.data
     assert "message" in response.data
-    assert response.data["message"] == "Pattern creation initiated. Check task status for progress."
+    assert (
+        response.data["message"]
+        == "Pattern creation initiated. Check task status for progress."
+    )
