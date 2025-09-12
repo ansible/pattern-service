@@ -7,13 +7,15 @@ This section walks you through setting up of the complete pattern loading workfl
 * Access to AAP development environment.
 * Latest container images for `pattern-service`.
 * Required tools installed: `ansible-builder`, `podman`, `make`.
-* Admin credentials for PAH (Private Automation Hub).
+* Admin credentials for Private Automation Hub (PAH).
 
 ## Steps to Test the Workflow
 
 ### 1. Publish the Latest Pattern-Service Container
 
-Publish the latest container image for the `pattern-service` so it can be used in your AAP development environment.
+Publish the latest container image for the `pattern-service` so it can be used in your AAP development environment. Following documents can be referred to achieve it 
+* [Build container image](https://github.com/ansible/pattern-service/blob/main/tools/podman/README.md)
+* [Push the image to quay.io](https://github.com/ansible/pattern-service/blob/main/register-service-on-aap-gateway.md)
 
 ### 2. Run AAP Dev
 
@@ -22,17 +24,17 @@ For detailed steps on deploying AAP dev with the pattern service, see the AAP-De
 
 ### 3. Apply License and Admin Setup
 
-Run the following commands in your AAP dev environment:
+In a separate terminal window, run the following commands from the top level of your locally-cloned [aap-dev](https://github.com/ansible/aap-dev) repository:
 
 ```bash
 make aap-apply-license
 make aap-admin
 ```
 
-### 4. Build, Tag, and Publish the Execution Environment to Private Automation Hub
-The example collection used here is cloud.aws_ops
+### 4. Build, Tag, and Publish the Execution Environment (EE) to Private Automation Hub (PAH)
+The example collection used is [cloud.aws_ops](https://github.com/redhat-cop/cloud.aws_ops) and the pattern is [configure_ec2](https://github.com/redhat-cop/cloud.aws_ops/tree/main/extensions/patterns/configure_ec2).
 
-From the directory containing the EE definition, run the following steps:
+From the directory containing the [EE definition](https://github.com/redhat-cop/cloud.aws_ops/blob/main/extensions/patterns/configure_ec2/exec_env/execution-environment.yml), run the following steps:
 
 1. Create the execution environment:
 
@@ -63,17 +65,40 @@ podman push localhost:44926/cloud/aws_ops-ee:latest --tls-verify=false
 1. **Collections Hub**:
 
    * Create a new collection namespace, e.g., `cloud`.
-   * Upload the `cloud.aws_ops` collection tarball.
-   * Approve the collection from the staging pipeline.
+   * Upload the `cloud.aws_ops` collection tarball (This is created in the previous steps).
+   * Approve the collection from the staging pipeline (Contact [Partner-Engineering](https://source.redhat.com/groups/public/ansible_engineering/wiki/partner_engineering_team) for approval).
+  * For detailed steps, refer [Managing collections in automation hub](https://docs.redhat.com/en/documentation/red_hat_ansible_automation_platform/2.5/html/managing_automation_content/managing-collections-hub).
 
 2. **Controller Credentials**:
 
-   * Create a **source control credential** to PAH using the admin username and password. Note the **credential ID**.
-   * Create a **registry credential** to PAH using the admin username and password and `localhost:44926` as the authentication URL. Note the **credential ID**.
+   * Create a [**source control credential**](https://docs.redhat.com/en/documentation/red_hat_ansible_automation_platform/2.5/html/using_automation_execution/controller-credentials#ref-controller-credential-source-control) to PAH using the admin username and password. Note the **credential ID**.
+   * Create a [**registry credential**](https://docs.redhat.com/en/documentation/red_hat_ansible_automation_platform/latest/html/using_automation_execution/controller-credentials#ref-controller-credential-container-registry) to PAH using the admin username and password and `localhost:44926` as the authentication URL. Note the **credential ID**.
+
+#### Example Credentials Payload
+
+```json
+{
+  "ee": 4,
+  "project": 3
+}
+```
+
+> Note: IDs correspond to resources created in this step.
 
 3. **User and Team Setup**:
 
    * Create a user and a team to assign the Job Template (JT) execute role. Note their **IDs**.
+
+#### Example Executors Payload
+
+```json
+{
+  "teams": [1],
+  "users": [3]
+}
+```
+
+> Note: IDs correspond to resources created in this step.
 
 ### 6. Run the Pattern Service Locally
 
@@ -89,25 +114,3 @@ make compose-up
 
    * Create the **pattern**.
    * Create a **pattern instance**, using the saved IDs and credentials from the previous steps.
-
-#### Example Credentials Payload
-
-```json
-{
-  "ee": 4,
-  "project": 3
-}
-```
-
-> Note: IDs correspond to resources created in previous steps.
-
-#### Example Executors Payload
-
-```json
-{
-  "teams": [1],
-  "users": [3]
-}
-```
-
-> Note: IDs correspond to resources created in previous steps.
