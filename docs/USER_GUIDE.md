@@ -64,10 +64,9 @@ podman push localhost:44926/cloud/aws_ops-ee:latest --tls-verify=false
 
 1. **Collections Hub**:
 
-   * Create a new collection namespace, e.g., `cloud`.
-   * Upload the `cloud.aws_ops` collection tarball (This is created in the previous steps).
+   * Create a new collection namespace, e.g., `cloud` and upload the `cloud.aws_ops` collection tarball into Automation Hub.
    * Approve the collection from the staging pipeline (Contact [Partner-Engineering](https://source.redhat.com/groups/public/ansible_engineering/wiki/partner_engineering_team) for approval).
-  * For detailed steps, refer [Managing collections in automation hub](https://docs.redhat.com/en/documentation/red_hat_ansible_automation_platform/2.5/html/managing_automation_content/managing-collections-hub).
+   * For detailed steps, refer [Managing collections in automation hub](https://docs.redhat.com/en/documentation/red_hat_ansible_automation_platform/2.5/html/managing_automation_content/managing-collections-hub).
 
 2. **Controller Credentials**:
 
