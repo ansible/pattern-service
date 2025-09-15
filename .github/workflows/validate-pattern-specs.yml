@@ -1,0 +1,73 @@
+---
+name: Validate Pattern Spec Version
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+on:
+  pull_request:
+    branches:
+      - main
+      - stable-*
+    tags:
+      - "*"
+jobs:
+  version_check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch full history to allow diffing against previous commits
+
+      - name: Get changed files
+        id: changed-files
+        run: |
+          # Determine the range of commits to analyze
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            BASE_COMMIT=${{ github.event.pull_request.base.sha }}
+            HEAD_COMMIT=${{ github.event.pull_request.head.sha }}
+            CHANGED_FILES=$(git diff --name-only pattern_service/specifications/ $BASE_COMMIT..$HEAD_COMMIT)
+          else
+            CHANGED_FILES=$(git diff --name-only pattern_service/specifications/ HEAD^..HEAD)
+          fi
+
+          echo "Changed files: $CHANGED_FILES" # TODO: limit to specifications/ directory, except dev?
+
+          # Check if the specific file was modified
+          if echo "$CHANGED_FILES" | grep -q "\$id": "https://raw\.githubusercontent\.com/ansible/pattern-service/main/specifications/pattern-schema/pattern-schema-([0-9]+(\.[0-9]+)+)\.json"; then
+            echo "::set-output name=important_file_changed::true"
+          else
+            echo "::set-output name=important_file_changed::false"
+          fi
+
+          # need to instead of checking regex for that, grep for changed files includes anything inside of specifications?
+          # Because right now it will only output for pattern-schema <version number> rather than pattern-schema-latest or <number> or pattern spec
+          # I currently have it set so that the diff should only run in specifications/ which might be better still
+          # that way I can reuse this portion of the code and just split it so that we check schema version vs pattern spec version on two separate actions
+
+      - name: Run action if pattern schema version changed
+        if: steps.changed-files.outputs.important_file_changed == 'true'
+        run: |
+          echo "pattern-schema-1.0.0.json was modified! Changes to this file are not permitted."
+          f1
+          # Add your specific commands here, e.g., run a script, send a notification, etc.
+          echo "This is the content of the changed file:"
+          cat important-file.txt
+          # if a file gets added check ID variable - check everything in last file name after "$id" - regex?
+
+      - name: Run action if pattern specification version changed
+        if: steps.changed-files.outputs.important_file_changed == 'true'
+        run: |
+          echo "pattern-specification-1.0.0.json was modified! Changes to this file are not permitted."
+          f1
+          # Add your specific commands here, e.g., run a script, send a notification, etc.
+          echo "This is the content of the changed file:"
+          cat important-file.txt # this needs to be distinct from the schema version, so I don't think we can lump that into "important-file.txt" or whatever
+          # if a file gets added check ID variable - check everything in last file name after "$id" - regex?
+
+      - name: For new files check if file name and ID variable match
+        if: steps.changed-files.outputs.important_file_changed == 'true'
+        run: | # if new file check name and id variable match?
