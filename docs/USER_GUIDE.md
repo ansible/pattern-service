@@ -13,7 +13,7 @@ This section walks you through setting up of the complete pattern loading workfl
 
 ### 1. Publish the Latest Pattern-Service Container
 
-Publish the latest container image for the `pattern-service` so it can be used in your AAP development environment. Following documents can be referred to achieve it 
+Publish the latest container image for the `pattern-service` so it can be used in your AAP development environment. Following documents can be referred to achieve it
 * [Build container image](https://github.com/ansible/pattern-service/blob/main/tools/podman/README.md)
 * [Push the image to quay.io](https://github.com/ansible/pattern-service/blob/main/register-service-on-aap-gateway.md)
 
@@ -64,7 +64,7 @@ podman push localhost:44926/cloud/aws_ops-ee:latest --tls-verify=false
 
 1. **Collections Hub**:
 
-   * Create a new collection namespace, e.g., `cloud` and upload the `cloud.aws_ops` collection tarball into Automation Hub.
+   * Create a new collection namespace, e.g., `cloud` and upload the `cloud.aws_ops` collection tarball created in the above step into Automation Hub.
    * Approve the collection from the staging pipeline (Contact [Partner-Engineering](https://source.redhat.com/groups/public/ansible_engineering/wiki/partner_engineering_team) for approval).
    * For detailed steps, refer [Managing collections in automation hub](https://docs.redhat.com/en/documentation/red_hat_ansible_automation_platform/2.5/html/managing_automation_content/managing-collections-hub).
 
@@ -109,7 +109,7 @@ make compose-up
 
 ### 7. Create Pattern and Pattern Instance
 
-1. In the **Pattern Service Browseable API**:
+1. In the **Pattern Service Browseable API** (e.g. `http://localhost:8000/api/pattern-service/v1/patterns`):
 
    * Create the **pattern**.
    * Create a **pattern instance**, using the saved IDs and credentials from the previous steps.
