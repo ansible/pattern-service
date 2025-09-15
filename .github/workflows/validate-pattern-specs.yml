@@ -21,6 +21,9 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0 # Fetch full history to allow diffing against previous commits
+      - name: Checkout main branch
+        run: |
+          git fetch origin main:main
 
       - name: Get changed files
         id: changed-files
@@ -29,48 +32,73 @@ jobs:
           if [ "${{ github.event_name }}" == "pull_request" ]; then
             BASE_COMMIT=${{ github.event.pull_request.base.sha }}
             HEAD_COMMIT=${{ github.event.pull_request.head.sha }}
-            CHANGED_FILES=$(git diff --name-only pattern_service/specifications/ $BASE_COMMIT..$HEAD_COMMIT)
+            CHANGED_FILES=$(git diff --name-only $BASE_COMMIT..$HEAD_COMMIT)
           else
-            CHANGED_FILES=$(git diff --name-only pattern_service/specifications/ HEAD^..HEAD)
+            CHANGED_FILES=$(git diff --name-only HEAD^..HEAD)
           fi
 
-          echo "Changed files: $CHANGED_FILES" # TODO: limit to specifications/ directory, except dev?
+          echo "Changed files: $CHANGED_FILES"
 
-          # Check if the specific file was modified
-          if echo "$CHANGED_FILES" | grep -q "\$id": "https://raw\.githubusercontent\.com/ansible/pattern-service/main/specifications/pattern-schema/pattern-schema-([0-9]+(\.[0-9]+)+)\.json"; then
-            echo "::set-output name=important_file_changed::true"
-          else
-            echo "::set-output name=important_file_changed::false"
-          fi
+          # Check for pattern specification files (excluding dev versions)
+          SPEC_FILES=$(echo "$CHANGED_FILES" | grep -E '^specifications/pattern-specification/.*\.md$' | grep -v 'dev\.md$' || true)
+          echo "spec_files<<EOF" >> $GITHUB_OUTPUT
+          echo "$SPEC_FILES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
-          # need to instead of checking regex for that, grep for changed files includes anything inside of specifications?
-          # Because right now it will only output for pattern-schema <version number> rather than pattern-schema-latest or <number> or pattern spec
-          # I currently have it set so that the diff should only run in specifications/ which might be better still
-          # that way I can reuse this portion of the code and just split it so that we check schema version vs pattern spec version on two separate actions
+          # Check for pattern schema files (excluding dev versions)
+          SCHEMA_FILES=$(echo "$CHANGED_FILES" | grep -E '^specifications/pattern-schema/.*\.json$' | grep -v 'dev\.json$' || true)
+          echo "schema_files<<EOF" >> $GITHUB_OUTPUT
+          echo "$SCHEMA_FILES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
-      - name: Run action if pattern schema version changed
-        if: steps.changed-files.outputs.important_file_changed == 'true'
-        run: |
-          echo "pattern-schema-1.0.0.json was modified! Changes to this file are not permitted." # echo "::error::<error message>" will display red in the logs
-          f1
-          # Add your specific commands here, e.g., run a script, send a notification, etc.
-          echo "This is the content of the changed file:"
-          cat important-file.txt
-          # if a file gets added check ID variable - check everything in last file name after "$id" - regex?
-          # maybe what I do is move grep here for pattern schema file, then that way the output can be specific to that and I can use it as a variable, e.g. $pattern_schema_changed sort of thing? if != regex-for-dev blah blah
-          # if I go this route I have to repeat this code for pattern spec version also?
+          # Check for new pattern specification files that don't exist in main
+          NEW_SPEC_FILES="" # https://community.unix.com/t/if-condition-to-check-one-file-newer-than-the-other-first-file-name-uncertain/243995/7
+          if [ -n "$SPEC_FILES" ]; then
+            echo "$SPEC_FILES" | while read -r file; do
+              if [ -n "$file" ]; then
+                if ! git show main:$file >/dev/null 2>&1' then
+                  echo "$file"
+                fi
+              fi
+            done > /tmp/new_spec_files.txt
+            NEW_SPEC_FILES=$(cat /tmp/new_spec_files.txt 2>/dev/null || true)
 
+          # Check for new pattern schema files that don't exist in main
+          NEW_SCHEMA_FILES=""
+          if [ -n "$SCHEMA_FILES" ]; then
+            echo "$SCHEMA_FILES" | while read -r file; do
+              if [ -n "$file" ]; then
+                if ! git show main:$file >/dev/null 2>&1' then
+                  echo "$file"
+                fi
+              fi
+            done > /tmp/new_spec_files.txt
+            NEW_SPEC_FILES=$(cat /tmp/new_spec_files.txt 2>/dev/null || true)
 
       - name: Run action if pattern specification version changed
-        if: steps.changed-files.outputs.important_file_changed == 'true'
+        if: steps.changed-files.outputs.spec_files != ''
         run: |
-          echo "pattern-schema-1.0.0.json was modified! Changes to this file are not permitted." # echo "::error::<error message>"
-          f1
+          echo "::error::pattern-schema-1.0.0.json was modified! Changes to this file are not permitted."
+          echo "This is the content of the changed file:"
+          cat spec_files.txt
+
+      - name: Run action if pattern schema version changed
+        if: steps.changed-files.outputs.spec_files != ''
+        run: |
+          echo "::error:: pattern-schema-1.0.0.json was modified! Changes to this file are not permitted."
           # Add your specific commands here, e.g., run a script, send a notification, etc.
           echo "This is the content of the changed file:"
-          cat important-file.txt # this needs to be distinct from the schema version, so I don't think we can lump that into "important-file.txt" or whatever
-          # if a file gets added check ID variable - check everything in last file name after "$id" - regex?
+          cat schema_files.txt
+
+        # eventually, we may want to create a new if chunk to check that what is in this file is different than what is in main
+        # throw an error telling you not to do this in main
+        # if there is a totally new file, we would want to check the version in the file name against the version in the file text 'version' variable
+        # throw another error if it doesn't match
+
 
       - name: For new files check if file name and ID variable match
-        if: steps.changed-files.outputs.important_file_changed == 'true'
-        run: | # if new file check name and id variable match? Will new files be included in changed files? I assume they are
+        if: steps.changed-files.outputs.important_file_changed != ''
+        #if the file is new, make the file version a variable (same regex?), then check that variable against the "version: " inside the file by using grep?
+        run: |
+         grep -q
+        #will new files be included in changed files? I assume they are
