@@ -51,17 +51,20 @@ jobs:
       - name: Run action if pattern schema version changed
         if: steps.changed-files.outputs.important_file_changed == 'true'
         run: |
-          echo "pattern-schema-1.0.0.json was modified! Changes to this file are not permitted."
+          echo "pattern-schema-1.0.0.json was modified! Changes to this file are not permitted." # echo "::error::<error message>" will display red in the logs
           f1
           # Add your specific commands here, e.g., run a script, send a notification, etc.
           echo "This is the content of the changed file:"
           cat important-file.txt
           # if a file gets added check ID variable - check everything in last file name after "$id" - regex?
+          # maybe what I do is move grep here for pattern schema file, then that way the output can be specific to that and I can use it as a variable, e.g. $pattern_schema_changed sort of thing? if != regex-for-dev blah blah
+          # if I go this route I have to repeat this code for pattern spec version also?
+
 
       - name: Run action if pattern specification version changed
         if: steps.changed-files.outputs.important_file_changed == 'true'
         run: |
-          echo "pattern-specification-1.0.0.json was modified! Changes to this file are not permitted."
+          echo "pattern-schema-1.0.0.json was modified! Changes to this file are not permitted." # echo "::error::<error message>"
           f1
           # Add your specific commands here, e.g., run a script, send a notification, etc.
           echo "This is the content of the changed file:"
@@ -70,4 +73,4 @@ jobs:
 
       - name: For new files check if file name and ID variable match
         if: steps.changed-files.outputs.important_file_changed == 'true'
-        run: | # if new file check name and id variable match?
+        run: | # if new file check name and id variable match? Will new files be included in changed files? I assume they are
