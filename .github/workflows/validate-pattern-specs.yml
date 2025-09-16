@@ -123,9 +123,10 @@ jobs:
               if [ -n "$VERSION" ]; then
                 # Construct expected ID once
                 EXPECTED_ID="https://raw.githubusercontent.com/ansible/pattern-service/main/specifications/pattern-schema/pattern-schema-${VERSION}.json"
-                echo "$EXPECTED_ID"
+                echo "EXPECTED_ID: '$EXPECTED_ID'"
                 # Validate new schema file's $id field
                 ACTUAL_ID=$(git show HEAD:$file | jq -r '.["$id"] // empty')
+                echo "ACTUAL_ID: '$ACTUAL_ID'"
                 if [ "$ACTUAL_ID" != "$EXPECTED_ID" ]; then
                   echo "::error::Schema file $file has incorrect \$id field. Expected: $EXPECTED_ID, Got: $ACTUAL_ID"
                   exit 1
