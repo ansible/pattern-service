@@ -81,7 +81,8 @@ jobs:
       - name: Validate pattern specification files
         if: steps.changed-files.outputs.spec_files != ''
         run: |
-          echo "${{ steps.changed-files.outputs.spec_files }}" | while read -r file; do
+          SPEC_FILES="${{ steps.changed-files.outputs.spec_files }}"
+          while IFS= read -r file; do
             if [ -n "$file" ]; then
               # Check if file exists in main branch
               if git show main:$file >/dev/null 2>&1; then
@@ -110,11 +111,18 @@ jobs:
                 fi
               fi
             fi
-          done
+          done <<< "$SPEC_FILES"
 
       - name: Validate pattern schema files
         if: steps.changed-files.outputs.schema_files != ''
         run: |
+          echo "=== DEBUG: Starting schema validation ==="
+          echo "Current working directory: $(pwd)"
+          echo "Git HEAD: $(git rev-parse HEAD)"
+          echo "Git status:"
+          git status
+          echo "=== END DEBUG ==="
+
           SCHEMA_FILES="${{ steps.changed-files.outputs.schema_files }}"
           while IFS= read -r file; do
             if [ -n "$file" ]; then
@@ -137,6 +145,11 @@ jobs:
                   echo "::error::Latest schema file was not updated to point to new version $VERSION. Expected \$id: $EXPECTED_ID, Got: $LATEST_ID"
                   exit 1
                 fi
+                echo "DEBUG: VERSION = $VERSION"
+                echo "DEBUG: EXPECTED_ID = $EXPECTED_ID"
+                echo "DEBUG: LATEST_ID = $LATEST_ID"
+                echo "DEBUG: ACTUAL_ID = $ACTUAL_ID"
+
               fi
             fi
           done <<< "$SCHEMA_FILES"
