@@ -1,6 +1,6 @@
 # Pattern Loading Service Workflow
 
-This section walks you through setting up of the complete pattern loading workflow in your AAP environment, including pattern-service, cloud collections, and execution environments (EE).
+This section walks you through setting up of the complete pattern loading workflow in your Ansible Automation Platform (AAP) environment, including pattern-service, cloud collections, and execution environments (EE).
 
 ## Prerequisites
 
