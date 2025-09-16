@@ -1,11 +1,11 @@
 [
     {
-        "httpRequest" : {
-            "method" : "GET",
-            "path" : "/api/galaxy/v3/plugin/ansible/content/published/collections/artifacts/ansible.test-1.2.3.tar.gz"
+        "httpRequest": {
+            "method": "GET",
+            "path": "/api/galaxy/v3/plugin/ansible/content/published/collections/artifacts/ansible.test-1.2.3.tar.gz"
         },
-        "httpResponse" : {
-            "body" : {
+        "httpResponse": {
+            "body": {
                 "content": "collection content"
             },
             "statusCode": 200
