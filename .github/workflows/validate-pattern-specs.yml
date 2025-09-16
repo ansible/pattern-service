@@ -34,6 +34,10 @@ jobs:
           HEAD_COMMIT=${{ github.event.pull_request.head.sha }}
           CHANGED_FILES=$(git diff --name-only $BASE_COMMIT..$HEAD_COMMIT)
 
+          echo "=== DEBUG: All changed files ==="
+          echo "$CHANGED_FILES"
+          echo "================================"
+
           # Check for pattern specification files (excluding dev versions)
           SPEC_FILES=$(echo "$CHANGED_FILES" | grep -E '^specifications/pattern-specification/.*\.md$' | grep -v 'dev\.md$' || true)
           echo "spec_files<<EOF" >> $GITHUB_OUTPUT
@@ -42,6 +46,9 @@ jobs:
 
           # Check for pattern schema files (excluding dev versions)
           SCHEMA_FILES=$(echo "$CHANGED_FILES" | grep -E '^specifications/pattern-schema/.*\.json$' | grep -v 'dev\.json$' || true)
+          echo "=== DEBUG: Schema files found ==="
+          echo "SCHEMA_FILES: $SCHEMA_FILES"
+          echo "================================"
           echo "schema_files<<EOF" >> $GITHUB_OUTPUT
           echo "$SCHEMA_FILES" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
@@ -116,12 +123,17 @@ jobs:
         if: steps.changed-files.outputs.schema_files != ''
         run: |
           SCHEMA_FILES="${{ steps.changed-files.outputs.schema_files }}"
+          echo "DEBUG: SCHEMA_FILES = $SCHEMA_FILES"
           while IFS= read -r file; do
+            echo "DEBUG: Processing file = $file"
             if [ -n "$file" ]; then
               # Extract version from filename
-              VERSION=$(echo "$file" | sed -n 's/.*pattern-schema-\([^.]*\)\.json/\1/p')
+              VERSION=$(echo "$file" | sed -n 's/.*pattern-schema-\([^/]*\)\.json/\1/p')
+              echo "DEBUG: Extracted VERSION = $VERSION"
+              echo "DEBUG: sed result: $(echo "$file" | sed -n 's/.*pattern-schema-\([^.]*\)\.json/\1/p')"
 
               if [ -n "$VERSION" ]; then
+                echo "DEBUG: VERSION is not empty, proceeding with validation"
                 # Construct expected ID once
                 EXPECTED_ID="https://raw.githubusercontent.com/ansible/pattern-service/main/specifications/pattern-schema/pattern-schema-${VERSION}.json"
                 echo "EXPECTED_ID: $EXPECTED_ID"
@@ -135,10 +147,15 @@ jobs:
 
                 # Validate latest schema file points to new version
                 LATEST_ID=$(git show HEAD:specifications/pattern-schema/pattern-schema-latest.json | jq -r '.["$id"] // empty')
+                echo "LATEST_ID: $LATEST_ID"
                 if [ "$LATEST_ID" != "$EXPECTED_ID" ]; then
                   echo "::error::Latest schema file was not updated to point to new version $VERSION. Expected \$id: $EXPECTED_ID, Got: $LATEST_ID"
                   exit 1
                 fi
+              else
+                echo "DEBUG: VERSION is empty, skipping validation"
               fi
+            else
+              echo "DEBUG: File is empty, skipping"
             fi
           done <<< "$SCHEMA_FILES"
