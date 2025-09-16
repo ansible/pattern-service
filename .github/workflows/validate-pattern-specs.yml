@@ -114,6 +114,7 @@ jobs:
 
       - name: Validate pattern schema files
         if: steps.changed-files.outputs.schema_files != ''
+        shell: bash
         run: |
           echo "${{ steps.changed-files.outputs.schema_files }}" | while read -r file; do
             if [ -n "$file" ]; then
