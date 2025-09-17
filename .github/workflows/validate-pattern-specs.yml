@@ -23,13 +23,13 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Checkout main branch
-        run: |
-          git fetch origin main:main
-
       - name: Get changed files
         id: changed-files
         run: |
+          BASE_COMMIT=${{ github.event.pull_request.base.sha }}
+          HEAD_COMMIT=${{ github.event.pull_request.head.sha }}
+          CHANGED_FILES=$(git diff --name-only $BASE_COMMIT..$HEAD_COMMIT)
+
           # Get only new spec files (excluding dev versions)
           NEW_SPEC_FILES=$(git diff origin/main --name-only --diff-filter=A -- specifications/pattern-specification/*.md ":(exclude)*dev.md" || true)
           echo "new_spec_files<<EOF" >> $GITHUB_OUTPUT
@@ -69,6 +69,7 @@ jobs:
           echo "new_schema_files<<EOF" >> $GITHUB_OUTPUT
           echo "$NEW_SCHEMA_FILES" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
+
 
       - name: Validate pattern specification files
         if: steps.changed-files.outputs.spec_files != ''
