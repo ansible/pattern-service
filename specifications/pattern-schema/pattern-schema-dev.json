@@ -1,6 +1,6 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://raw.githubusercontent.com/ansible/pattern-service/main/specifications/pattern-schema/pattern-schema-dev.json",
+    "$id": "https://raw.githubusercontent.com/ansible/pattern-service/main/specifications/pattern-schema/pattern-schema-dev-2.0.0.json",
     "title": "Ansible Pattern Schema",
     "description": "A schema for validating Ansible pattern definitions",
     "type": "object",
