@@ -1,7 +1,7 @@
 ---
 title: Ansible Patterns Specification
 author: Ansible Cloud Content team
-version: dev-2.0.0
+version: dev
 ---
 
 # Ansible Pattern Specification
