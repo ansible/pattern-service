@@ -1,0 +1,15 @@
+FROM busybox:1.35
+
+# Create a non-root user to own the files and run our server
+RUN adduser -D static
+USER static
+WORKDIR /home/static
+
+# Copy the static website
+RUN mkdir -p api/galaxy/v3/plugin/ansible/content/published/collections/artifacts
+
+# Use the .dockerignore file to control what ends up inside the image!
+COPY core/tests/integration/collections/*.tar.gz api/galaxy/v3/plugin/ansible/content/published/collections/artifacts
+
+# Run BusyBox httpd
+CMD ["busybox", "httpd", "-f", "-v", "-p", "3000"]

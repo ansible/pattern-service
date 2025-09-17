@@ -2,27 +2,17 @@ services:
   postgres:
     image: quay.io/sclorg/postgresql-15-c9s:latest
     environment:
-      POSTGRESQL_USER: pattern
-      POSTGRESQL_PASSWORD: insecure
-      POSTGRESQL_DATABASE: test_pattern_db
+      POSTGRESQL_ADMIN_PASSWORD: insecure
     ports:
       - '5432:5432'
     # volumes:
     #   - 'postgres_data:/var/lib/pgsql/data'
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "pattern", "-d", "pattern_db"]
+      test: ["CMD", "pg_isready", "-U", "postgres"]
       interval: 5s
       timeout: 5s
       retries: 3
       start_period: 5s
-    # ports:
-    #   - '5432:5432'
-    # healthcheck:
-    #   test: [ 'CMD', 'pg_isready', '-U', 'postgres' ]
-    #   interval: 5s
-    #   timeout: 5s
-    #   retries: 3
-    #   start_period: 5s
   worker:
     image: localhost/pattern-service-worker
     environment:
@@ -30,30 +20,24 @@ services:
       PATTERN_SERVICE_MODE: testing
       PATTERN_SERVICE_DB_HOST: postgres
       PATTERN_SERVICE_DB_PORT: 5432
-      # PATTERN_SERVICE_DB_NAME: pattern_db
-      PATTERN_SERVICE_DB_USER: pattern
-      # PATTERN_SERVICE_DB_PASSWORD: pattern123
+      PATTERN_SERVICE_DB_NAME: postgres
+      PATTERN_SERVICE_DB_USER: postgres
+      PATTERN_SERVICE_DB_PASSWORD: insecure
+      PATTERN_SERVICE_AAP_URL: "http://localhost:3000"
     build:
       context: ../../
       dockerfile: tools/podman/Containerfile.dev
     command:
       - /bin/bash
       - -c
-      - >-
-        python3.11 /app/manage.py makemigrations
-        && python3.11 /app/manage.py migrate
-        && python3.11 /app/manage.py worker
+      - python3.11 /app/manage.py worker
     depends_on:
       postgres:
         condition: service_healthy
     restart: always
-  hub_api:
-    image: docker.io/mockserver/mockserver:latest
-    ports:
-      - 44926:1080
-    environment:
-      MOCKSERVER_WATCH_INITIALIZATION_JSON: "true"
-      MOCKSERVER_PROPERTY_FILE: /config/mockserver.properties
-      MOCKSERVER_INITIALIZATION_JSON_PATH: /config/initializerJson.json
-    volumes:
-      - ./hub-api-config-test.json:/config/initializerJson.json:Z
+  hub:
+    image: localhost/pattern-service-integration-hub
+    build:
+      context: ../../
+      dockerfile: tools/podman/Containerfile.hub
+    restart: always

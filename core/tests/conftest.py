@@ -13,6 +13,7 @@ def client():
 
 @pytest.fixture()
 def automation(db, pattern_instance) -> models.Automation:
+    models.Automation.objects.all().delete()
     automation = models.Automation.objects.create(
         automation_type=api_examples.automation_get_response.value["automation_type"],
         automation_id=api_examples.automation_get_response.value["automation_id"],
@@ -24,6 +25,7 @@ def automation(db, pattern_instance) -> models.Automation:
 
 @pytest.fixture()
 def controller_label(db) -> models.ControllerLabel:
+    models.ControllerLabel.objects.all().delete()
     controller_label = models.ControllerLabel.objects.create(
         label_id=api_examples.controller_label_get_response.value["label_id"]
     )
@@ -32,6 +34,7 @@ def controller_label(db) -> models.ControllerLabel:
 
 @pytest.fixture()
 def pattern(db) -> models.Pattern:
+    models.Pattern.objects.all().delete()
     pattern = models.Pattern.objects.create(
         collection_name=api_examples.pattern_post_request.value["collection_name"],
         collection_version=api_examples.pattern_post_request.value[
@@ -44,6 +47,7 @@ def pattern(db) -> models.Pattern:
 
 @pytest.fixture()
 def pattern_instance(db, pattern) -> models.PatternInstance:
+    models.PatternInstance.objects.all().delete()
     pattern_instance = models.PatternInstance.objects.create(
         credentials=api_examples.pattern_instance_post_request.value["credentials"],
         executors=api_examples.pattern_instance_post_request.value["executors"],
@@ -55,6 +59,7 @@ def pattern_instance(db, pattern) -> models.PatternInstance:
 
 @pytest.fixture()
 def task(db) -> models.Task:
+    models.Task.objects.all().delete()
     task = models.Task.objects.create(
         status=api_examples.task_get_response.value["status"],
         details=api_examples.task_get_response.value["details"],

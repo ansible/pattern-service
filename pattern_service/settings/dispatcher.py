@@ -32,21 +32,20 @@ def override_dispatcher_settings(loaded_settings: Dynaconf) -> None:
     db_sslkey = loaded_settings.get("DB_SSLKEY", default="")
     db_sslrootcert = loaded_settings.get("DB_SSLROOTCERT", default="")
 
-    if loaded_settings.get("MODE", "development") == "development":
-        databases["default"] = {
-            "ENGINE": "django.db.backends.postgresql",
-            "HOST": db_host,
-            "PORT": db_port,
-            "USER": db_user,
-            "PASSWORD": db_user_pass,
-            "NAME": db_name,
-            "OPTIONS": {
-                "sslmode": db_sslmode,
-                "sslcert": db_sslcert,
-                "sslkey": db_sslkey,
-                "sslrootcert": db_sslrootcert,
-            },
-        }
+    databases["default"] = {
+        "ENGINE": "django.db.backends.postgresql",
+        "HOST": db_host,
+        "PORT": db_port,
+        "USER": db_user,
+        "PASSWORD": db_user_pass,
+        "NAME": db_name,
+        "OPTIONS": {
+            "sslmode": db_sslmode,
+            "sslcert": db_sslcert,
+            "sslkey": db_sslkey,
+            "sslrootcert": db_sslrootcert,
+        },
+    }
 
     databases["dispatcher"] = {
         "ENGINE": "django.db.backends.postgresql",

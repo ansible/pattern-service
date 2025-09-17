@@ -4,8 +4,8 @@ ALLOWED_HOSTS = ["localhost", "pattern-service", "127.0.0.1"]
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "insecure"
 
-DB_NAME = "test_pattern_db"
-DB_USER = "pattern"
+DB_NAME = "postgres"
+DB_USER = "postgres"
 DB_PASSWORD = "insecure"
 
 DATABASES = {
