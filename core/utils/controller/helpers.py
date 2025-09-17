@@ -173,7 +173,6 @@ def create_execution_environment(
 def create_labels(
     session: requests.Session,
     instance: PatternInstance,
-    pattern: Pattern,
     pattern_def: Dict[str, Any],
 ) -> List[ControllerLabel]:
     """
@@ -192,9 +191,9 @@ def create_labels(
         label_def = {
             "name": aap_resource_info_hash(
                 name,
-                pattern.collection_name,
-                pattern.pattern_name,
-                pattern.collection_version,
+                pattern_def["collection_name"],
+                pattern_def["pattern_name"],
+                pattern_def["collection_version"],
                 instance.organization_id,
             )
         }
@@ -211,7 +210,6 @@ def create_labels(
 def create_job_templates(
     session: requests.Session,
     instance: PatternInstance,
-    pattern: Pattern,
     pattern_def: Dict[str, Any],
     project_id: int,
     ee_id: int,
@@ -220,7 +218,6 @@ def create_job_templates(
     Creates job templates and associated surveys.
     Args:
         instance (PatternInstance): The PatternInstance object.
-        pattern (Pattern): The related Pattern object.
         pattern_def (Dict[str, Any]): The pattern definition dictionary.
         project_id (int): Controller project ID.
         ee_id (int): Execution environment ID.
@@ -239,9 +236,9 @@ def create_job_templates(
             # Add unique name to the job template definition
             "name": aap_resource_info_hash(
                 jt["name"],
-                pattern.collection_name,
-                pattern.pattern_name,
-                pattern.collection_version,
+                pattern_def["collection_name"],
+                pattern_def["pattern_name"],
+                pattern_def["collection_version"],
                 instance.organization_id,
             ),
             "organization": instance.organization_id,

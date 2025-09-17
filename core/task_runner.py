@@ -83,10 +83,10 @@ def run_pattern_instance_task(instance_id: int, task_id: int) -> None:
             task.mark_running({"info": "Creating execution environment"})
             ee_id = create_execution_environment(session, instance, pattern_def)
             task.mark_running({"info": "Creating labels"})
-            labels = create_labels(session, instance, pattern, pattern_def)
+            labels = create_labels(session, instance, pattern_def)
             task.mark_running({"info": "Creating job templates"})
             automations = create_job_templates(
-                session, instance, pattern, pattern_def, project_id, ee_id
+                session, instance, pattern_def, project_id, ee_id
             )
             task.mark_running({"info": "Saving instance"})
             save_instance_state(instance, project_id, ee_id, labels, automations)

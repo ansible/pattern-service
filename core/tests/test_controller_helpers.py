@@ -222,12 +222,12 @@ def test_create_execution_environment_pull(
 @patch("core.utils.controller.helpers.post")
 def test_create_labels(mock_post, MockControllerLabel, mock_session):
     instance = MagicMock(organization_id=1)
-    pattern = MagicMock(
-        collection_name="my_test_namespace.my_test_collection",
-        pattern_name="tester",
-        collection_version="1.0.0",
-    )
-    pattern_def = {"aap_resources": {"controller_labels": ["L1", "L2"]}}
+    pattern_def = {
+        "collection_name": "my_test_namespace.my_test_collection",
+        "pattern_name": "tester",
+        "collection_version": "1.0.0",
+        "aap_resources": {"controller_labels": ["L1", "L2"]}
+    }
 
     mock_post.side_effect = [
         {"id": 10},
@@ -240,7 +240,7 @@ def test_create_labels(mock_post, MockControllerLabel, mock_session):
         (label2, False),
     ]
 
-    labels = create_labels(mock_session, instance, pattern, pattern_def)
+    labels = create_labels(mock_session, instance, pattern_def)
 
     assert labels == [label1, label2]
     # Ensure proper payloads used
@@ -254,13 +254,11 @@ def test_create_labels(mock_post, MockControllerLabel, mock_session):
 @patch("core.utils.controller.helpers.post")
 def test_create_job_templates_payload_and_survey(mock_post, mock_session):
     instance = MagicMock(organization_id=5)
-    pattern = MagicMock(
-        collection_name="tester_namespace.test_collection",
-        pattern_name="demo_pattern",
-        collection_version="3.0.0",
-    )
     pattern_def = {
         "name": "mypat",
+        "collection_name": "tester_namespace.test_collection",
+        "pattern_name": "demo_pattern",
+        "collection_version": "3.0.0",
         "aap_resources": {
             "controller_job_templates": [
                 {
@@ -282,7 +280,7 @@ def test_create_job_templates_payload_and_survey(mock_post, mock_session):
     ]
 
     autos = create_job_templates(
-        mock_session, instance, pattern, pattern_def, project_id=10, ee_id=20
+        mock_session, instance, pattern_def, project_id=10, ee_id=20
     )
 
     assert autos == [
