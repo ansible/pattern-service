@@ -179,7 +179,6 @@ def create_labels(
     Creates controller labels and returns model instances.
     Args:
         instance (PatternInstance): The PatternInstance object.
-        pattern (Pattern): The related Pattern object.
         pattern_def (Dict[str, Any]): The pattern definition dictionary.
     Returns:
         List of ControllerLabel model instances.
