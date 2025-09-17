@@ -30,36 +30,28 @@ jobs:
       - name: Get changed files
         id: changed-files
         run: |
-          BASE_COMMIT=${{ github.event.pull_request.base.sha }}
-          HEAD_COMMIT=${{ github.event.pull_request.head.sha }}
-          CHANGED_FILES=$(git diff --name-only $BASE_COMMIT..$HEAD_COMMIT)
+          # Get only new spec files (excluding dev versions)
+          NEW_SPEC_FILES=$(git diff origin/main --name-only --diff-filter=A -- specifications/pattern-specification/*.md ":(exclude)*dev.md" || true)
+          echo "new_spec_files<<EOF" >> $GITHUB_OUTPUT
+          echo "$NEW_SPEC_FILES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
-          # Check for pattern specification files (excluding dev versions)
-          SPEC_FILES=$(echo "$CHANGED_FILES" | grep -E '^specifications/pattern-specification/.*\.md$' | grep -v 'dev\.md$' || true)
+          # Get only modified spec files (excluding dev versions)  
+          MODIFIED_SPEC_FILES=$(git diff origin/main --name-only --diff-filter=M -- specifications/pattern-specification/*.md ":(exclude)*dev.md" || true)
+          echo "modified_spec_files<<EOF" >> $GITHUB_OUTPUT
+          echo "$MODIFIED_SPEC_FILES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          # Get all changed spec files (new + modified)
+          ALL_SPEC_FILES=$(git diff origin/main --name-only --diff-filter=AM -- specifications/pattern-specification/*.md ":(exclude)*dev.md" || true)
           echo "spec_files<<EOF" >> $GITHUB_OUTPUT
-          echo "$SPEC_FILES" >> $GITHUB_OUTPUT
+          echo "$ALL_SPEC_FILES" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
           # Check for pattern schema files (excluding dev versions)
           SCHEMA_FILES=$(echo "$CHANGED_FILES" | grep -E '^specifications/pattern-schema/.*\.json$' | grep -v 'dev\.json$' || true)
           echo "schema_files<<EOF" >> $GITHUB_OUTPUT
           echo "$SCHEMA_FILES" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
-          # Check for new specification files that don't exist on main branch
-          NEW_SPEC_FILES=""
-          if [ -n "$SPEC_FILES" ]; then
-            echo "$SPEC_FILES" | while read -r file; do
-              if [ -n "$file" ]; then
-                if ! git show main:$file >/dev/null 2>&1; then
-                  echo "$file"
-                fi
-              fi
-            done > /tmp/new_spec_files.txt
-            NEW_SPEC_FILES=$(cat /tmp/new_spec_files.txt 2>/dev/null || true)
-          fi
-          echo "new_spec_files<<EOF" >> $GITHUB_OUTPUT
-          echo "$NEW_SPEC_FILES" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
           # Check for new schema files that don't exist on main branch
@@ -95,7 +87,7 @@ jobs:
                 # New specification file - validate version consistency
                 # Extract version once
                 FILENAME_VERSION=$(echo "$file" | sed -n 's/.*pattern-specification-\([^/]*\)\.md/\1/p')
-                FILE_VERSION=$(git show HEAD:$file | sed -n 's/^version:[[:space:]]*\([^[:space:]]*\).*/\1/p' | head -1)
+                FILE_VERSION=$(sed -n 's/^version:[[:space:]]*\([^[:space:]]*\).*/\1/p' "$file" | head -1)
 
                 # Validate filename vs content version
                 if [ "$FILENAME_VERSION" != "$FILE_VERSION" ]; then
@@ -104,7 +96,7 @@ jobs:
                 fi
 
                 # Validate latest file points to new version
-                LATEST_VERSION=$(git show HEAD:specifications/pattern-specification/pattern-specification-latest.md | sed -n 's/^version:[[:space:]]*\([^[:space:]]*\).*/\1/p' | head -1)
+                LATEST_VERSION=$(sed -n 's/^version:[[:space:]]*\([^[:space:]]*\).*/\1/p' "specifications/pattern-specification/pattern-specification-latest.md" | head -1)
                 if [ "$LATEST_VERSION" != "$FILENAME_VERSION" ]; then
                   echo "::error::Latest version of pattern specification does not point to the latest numeric version. Expected: $LATEST_VERSION, Got: $FILENAME_VERSION"
                   exit 1
