@@ -23,115 +23,102 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Checkout main branch
-        run: |
-          git fetch origin main:main
-
       - name: Get changed files
         id: changed-files
         run: |
-          BASE_COMMIT=${{ github.event.pull_request.base.sha }}
-          HEAD_COMMIT=${{ github.event.pull_request.head.sha }}
-          CHANGED_FILES=$(git diff --name-only $BASE_COMMIT..$HEAD_COMMIT)
-
-          # Check for pattern specification files (excluding dev versions)
-          SPEC_FILES=$(echo "$CHANGED_FILES" | grep -E '^specifications/pattern-specification/.*\.md$' | grep -v 'dev\.md$' || true)
-          echo "spec_files<<EOF" >> $GITHUB_OUTPUT
-          echo "$SPEC_FILES" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
-          # Check for pattern schema files (excluding dev versions)
-          SCHEMA_FILES=$(echo "$CHANGED_FILES" | grep -E '^specifications/pattern-schema/.*\.json$' | grep -v 'dev\.json$' || true)
-          echo "schema_files<<EOF" >> $GITHUB_OUTPUT
-          echo "$SCHEMA_FILES" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
-          # Check for new specification files that don't exist on main branch
-          NEW_SPEC_FILES=""
-          if [ -n "$SPEC_FILES" ]; then
-            echo "$SPEC_FILES" | while read -r file; do
-              if [ -n "$file" ]; then
-                if ! git show main:$file >/dev/null 2>&1; then
-                  echo "$file"
-                fi
-              fi
-            done > /tmp/new_spec_files.txt
-            NEW_SPEC_FILES=$(cat /tmp/new_spec_files.txt 2>/dev/null || true)
-          fi
+          # New specification files
+          NEW_SPEC_FILES=$(git diff origin/main --name-only --diff-filter=A -- specifications/pattern-specification/*.md ":(exclude)*dev.md" || true)
           echo "new_spec_files<<EOF" >> $GITHUB_OUTPUT
           echo "$NEW_SPEC_FILES" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
-          # Check for new schema files that don't exist on main branch
-          NEW_SCHEMA_FILES=""
-          if [ -n "$SCHEMA_FILES" ]; then
-            echo "$SCHEMA_FILES" | while read -r file; do
-              if [ -n "$file" ]; then
-                if ! git show main:$file >/dev/null 2>&1; then
-                  echo "$file"
-                fi
-              fi
-            done > /tmp/new_schema_files.txt
-            NEW_SCHEMA_FILES=$(cat /tmp/new_schema_files.txt 2>/dev/null || true)
-          fi
+          # Modified specification files
+          MODIFIED_SPEC_FILES=$(git diff origin/main --name-only --diff-filter=M -- specifications/pattern-specification/*.md ":(exclude)*dev.md" || true)
+          echo "modified_spec_files<<EOF" >> $GITHUB_OUTPUT
+          echo "$MODIFIED_SPEC_FILES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          # All changed specification files
+          ALL_SPEC_FILES=$(git diff origin/main --name-only --diff-filter=AM -- specifications/pattern-specification/*.md ":(exclude)*dev.md" || true)
+          echo "spec_files<<EOF" >> $GITHUB_OUTPUT
+          echo "$ALL_SPEC_FILES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          # New schema files
+          NEW_SCHEMA_FILES=$(git diff origin/main --name-only --diff-filter=A -- specifications/pattern-schema/*.json ":(exclude)*dev.json" || true)
           echo "new_schema_files<<EOF" >> $GITHUB_OUTPUT
           echo "$NEW_SCHEMA_FILES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          # Modified schema files
+          MODIFIED_SCHEMA_FILES=$(git diff origin/main --name-only --diff-filter=M -- specifications/pattern-schema/*.json ":(exclude)*dev.json" || true)
+          echo "modified_schema_files<<EOF" >> $GITHUB_OUTPUT
+          echo "$MODIFIED_SCHEMA_FILES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          # All changed schema files
+          ALL_SCHEMA_FILES=$(git diff origin/main --name-only --diff-filter=AM -- specifications/pattern-schema/*.json ":(exclude)*dev.json" || true)
+          echo "schema_files<<EOF" >> $GITHUB_OUTPUT
+          echo "$ALL_SCHEMA_FILES" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Validate pattern specification files
         if: steps.changed-files.outputs.spec_files != ''
         run: |
-          echo "${{ steps.changed-files.outputs.spec_files }}" | while read -r file; do
+          # First, check if any existing specification files were modified (not allowed)
+          if [ -n "${{ steps.changed-files.outputs.modified_spec_files }}" ]; then
+            echo "::error::Modifying existing versioned specification files is not allowed. Modified files: ${{ steps.changed-files.outputs.modified_spec_files }}"
+            exit 1
+          fi
+
+          # Validate new specification files
+          NEW_SPEC_FILES="${{ steps.changed-files.outputs.new_spec_files }}"
+          while IFS= read -r file; do
             if [ -n "$file" ]; then
-              # Check if file exists in main branch
-              if git show main:$file >/dev/null 2>&1; then
-                # Compare with main branch - fail if different
-                if ! git diff --quiet main:$file HEAD:$file; then
-                  echo "::error::Pattern specification file $file differs from main branch"
-                  exit 1
-                fi
-              else
-                # New specification file - validate version consistency
-                # Extract version once
-                FILENAME_VERSION=$(echo "$file" | sed -n 's/.*pattern-specification-\([^.]*\)\.md/\1/p')
-                FILE_VERSION=$(git show HEAD:$file | sed -n 's/^version:[[:space:]]*\([^[:space:]]*\).*/\1/p' | head -1)
+              # New specification file - validate version consistency
+              # Extract version once
+              FILENAME_VERSION=$(echo "$file" | sed -n 's/.*pattern-specification-\([^/]*\)\.md/\1/p')
+              FILE_VERSION=$(sed -n 's/^version:[[:space:]]*\([^[:space:]]*\).*/\1/p' "$file" | head -1)
 
-                # Validate filename vs content version
-                if [ "$FILENAME_VERSION" != "$FILE_VERSION" ]; then
-                  echo "::error::Specification file name does not match the specification version. Expected: $FILENAME_VERSION, Got: $FILE_VERSION"
-                  exit 1
-                fi
-
-                # Validate latest file points to new version
-                LATEST_VERSION=$(git show HEAD:specifications/pattern-specification/pattern-specification-latest.md | sed -n 's/^version:[[:space:]]*\([^[:space:]]*\).*/\1/p' | head -1)
-                if [ "$LATEST_VERSION" != "$FILENAME_VERSION" ]; then
-                  echo "::error::Latest version of pattern specification does not point to the latest numeric version. Expected: $LATEST_VERSION, Got: $FILENAME_VERSION"
-                  exit 1
-                fi
+              # Validate filename vs content version
+              if [ "$FILENAME_VERSION" != "$FILE_VERSION" ]; then
+                echo "::error::Specification file name does not match the specification version. Expected: $FILENAME_VERSION, Got: $FILE_VERSION"
+                exit 1
               fi
             fi
-          done
+          done <<< "$NEW_SPEC_FILES"
 
       - name: Validate pattern schema files
         if: steps.changed-files.outputs.schema_files != ''
         run: |
-          echo "${{ steps.changed-files.outputs.schema_files }}" | while read -r file; do
+          SCHEMA_FILES="${{ steps.changed-files.outputs.schema_files }}"
+          while IFS= read -r file; do
             if [ -n "$file" ]; then
-              # Extract version from filename
-              VERSION=$(echo "$file" | sed -n 's/.*pattern-schema-\([^.]*\)\.json/\1/p')
+              # Skip the latest file to ensure proper validation of $id field
+              if [[ "$file" == *"pattern-schema-latest.json" ]]; then
+                continue
+              fi
 
+              # Check if this is a modified existing versioned file (not allowed)
+              if git show origin/main:$file >/dev/null 2>&1; then
+                echo "::error::Modifying existing versioned schema files is not allowed. Modified file: $file"
+                exit 1
+              fi
+
+              # Extract version from filename
+              VERSION=$(echo "$file" | sed -n 's/.*pattern-schema-\([^/]*\)\.json/\1/p')
               if [ -n "$VERSION" ]; then
-                # Construct expected ID once
+                # Construct expected ID for the new versioned file
                 EXPECTED_ID="https://raw.githubusercontent.com/ansible/pattern-service/main/specifications/pattern-schema/pattern-schema-${VERSION}.json"
 
-                # Validate new schema file's $id field
+                # Validate versioned schema file's $id field
                 ACTUAL_ID=$(git show HEAD:$file | jq -r '.["$id"] // empty')
                 if [ "$ACTUAL_ID" != "$EXPECTED_ID" ]; then
                   echo "::error::Schema file $file has incorrect \$id field. Expected: $EXPECTED_ID, Got: $ACTUAL_ID"
                   exit 1
                 fi
 
-                # Validate latest schema file points to new version
+                # Validate latest schema file $id points to new version
                 LATEST_ID=$(git show HEAD:specifications/pattern-schema/pattern-schema-latest.json | jq -r '.["$id"] // empty')
                 if [ "$LATEST_ID" != "$EXPECTED_ID" ]; then
                   echo "::error::Latest schema file was not updated to point to new version $VERSION. Expected \$id: $EXPECTED_ID, Got: $LATEST_ID"
@@ -139,4 +126,4 @@ jobs:
                 fi
               fi
             fi
-          done
+          done <<< "$SCHEMA_FILES"
