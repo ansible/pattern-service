@@ -112,13 +112,19 @@ jobs:
           SCHEMA_FILES="${{ steps.changed-files.outputs.schema_files }}"
           while IFS= read -r file; do
             if [ -n "$file" ]; then
+              # Skip the latest file - it's handled separately
+              if [[ "$file" == *"pattern-schema-latest.json" ]]; then
+                continue
+              fi
+
               # Extract version from filename
               VERSION=$(echo "$file" | sed -n 's/.*pattern-schema-\([^/]*\)\.json/\1/p')
 
               if [ -n "$VERSION" ]; then
-                # Construct expected ID once
+                # Construct expected ID for the new versioned file
                 EXPECTED_ID="https://raw.githubusercontent.com/ansible/pattern-service/main/specifications/pattern-schema/pattern-schema-${VERSION}.json"
-                # Validate new schema file's $id field
+
+                # Validate versioned schema file's $id field
                 ACTUAL_ID=$(git show HEAD:$file | jq -r '.["$id"] // empty')
                 echo "DEBUG: Checking new versioned schema file $file"
                 echo "DEBUG: ACTUAL_ID = $ACTUAL_ID"
