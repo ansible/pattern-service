@@ -226,7 +226,7 @@ def test_create_labels(mock_post, MockControllerLabel, mock_session):
         "collection_name": "my_test_namespace.my_test_collection",
         "pattern_name": "tester",
         "collection_version": "1.0.0",
-        "aap_resources": {"controller_labels": ["L1", "L2"]}
+        "aap_resources": {"controller_labels": ["L1", "L2"]},
     }
 
     mock_post.side_effect = [
