@@ -26,50 +26,41 @@ jobs:
       - name: Get changed files
         id: changed-files
         run: |
-          BASE_COMMIT=${{ github.event.pull_request.base.sha }}
-          HEAD_COMMIT=${{ github.event.pull_request.head.sha }}
-          CHANGED_FILES=$(git diff --name-only $BASE_COMMIT..$HEAD_COMMIT)
-
-          # Get only new spec files (excluding dev versions)
+          # New specification files
           NEW_SPEC_FILES=$(git diff origin/main --name-only --diff-filter=A -- specifications/pattern-specification/*.md ":(exclude)*dev.md" || true)
           echo "new_spec_files<<EOF" >> $GITHUB_OUTPUT
           echo "$NEW_SPEC_FILES" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
-          # Get only modified spec files (excluding dev versions)  
+          # Modified specification files  
           MODIFIED_SPEC_FILES=$(git diff origin/main --name-only --diff-filter=M -- specifications/pattern-specification/*.md ":(exclude)*dev.md" || true)
           echo "modified_spec_files<<EOF" >> $GITHUB_OUTPUT
           echo "$MODIFIED_SPEC_FILES" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
-          # Get all changed spec files (new + modified)
+          # All changed specification files
           ALL_SPEC_FILES=$(git diff origin/main --name-only --diff-filter=AM -- specifications/pattern-specification/*.md ":(exclude)*dev.md" || true)
           echo "spec_files<<EOF" >> $GITHUB_OUTPUT
           echo "$ALL_SPEC_FILES" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
-          # Check for pattern schema files (excluding dev versions)
-          SCHEMA_FILES=$(echo "$CHANGED_FILES" | grep -E '^specifications/pattern-schema/.*\.json$' | grep -v 'dev\.json$' || true)
-          echo "schema_files<<EOF" >> $GITHUB_OUTPUT
-          echo "$SCHEMA_FILES" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
-          # Check for new schema files that don't exist on main branch
-          NEW_SCHEMA_FILES=""
-          if [ -n "$SCHEMA_FILES" ]; then
-            echo "$SCHEMA_FILES" | while read -r file; do
-              if [ -n "$file" ]; then
-                if ! git show main:$file >/dev/null 2>&1; then
-                  echo "$file"
-                fi
-              fi
-            done > /tmp/new_schema_files.txt
-            NEW_SCHEMA_FILES=$(cat /tmp/new_schema_files.txt 2>/dev/null || true)
-          fi
+          # New schema files
+          NEW_SCHEMA_FILES=$(git diff origin/main --name-only --diff-filter=A -- specifications/pattern-schema/*.json ":(exclude)*dev.json" || true)
           echo "new_schema_files<<EOF" >> $GITHUB_OUTPUT
           echo "$NEW_SCHEMA_FILES" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
+          # Modified schema files
+          MODIFIED_SCHEMA_FILES=$(git diff origin/main --name-only --diff-filter=M -- specifications/pattern-schema/*.json ":(exclude)*dev.json" || true)
+          echo "modified_schema_files<<EOF" >> $GITHUB_OUTPUT
+          echo "$MODIFIED_SCHEMA_FILES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          # All changed schema files
+          ALL_SCHEMA_FILES=$(git diff origin/main --name-only --diff-filter=AM -- specifications/pattern-schema/*.json ":(exclude)*dev.json" || true)
+          echo "schema_files<<EOF" >> $GITHUB_OUTPUT
+          echo "$ALL_SCHEMA_FILES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Validate pattern specification files
         if: steps.changed-files.outputs.spec_files != ''
@@ -102,17 +93,10 @@ jobs:
       - name: Validate pattern schema files
         if: steps.changed-files.outputs.schema_files != ''
         run: |
-          echo "=== DEBUG: Starting schema validation ==="
-          echo "Current working directory: $(pwd)"
-          echo "Git HEAD: $(git rev-parse HEAD)"
-          echo "Git status:"
-          git status
-          echo "=== END DEBUG ==="
-
           SCHEMA_FILES="${{ steps.changed-files.outputs.schema_files }}"
           while IFS= read -r file; do
             if [ -n "$file" ]; then
-              # Skip the latest file - it's handled separately
+              # Skip the latest file to ensure proper validation of $id field
               if [[ "$file" == *"pattern-schema-latest.json" ]]; then
                 continue
               fi
@@ -126,9 +110,6 @@ jobs:
 
                 # Validate versioned schema file's $id field
                 ACTUAL_ID=$(git show HEAD:$file | jq -r '.["$id"] // empty')
-                echo "DEBUG: Checking new versioned schema file $file"
-                echo "DEBUG: ACTUAL_ID = $ACTUAL_ID"
-                echo "DEBUG: EXPECTED_ID = $EXPECTED_ID"
                 if [ "$ACTUAL_ID" != "$EXPECTED_ID" ]; then
                   echo "::error::Schema file $file has incorrect \$id field. Expected: $EXPECTED_ID, Got: $ACTUAL_ID"
                   exit 1
@@ -136,17 +117,10 @@ jobs:
 
                 # Validate latest schema file points to new version
                 LATEST_ID=$(git show HEAD:specifications/pattern-schema/pattern-schema-latest.json | jq -r '.["$id"] // empty')
-                echo "DEBUG: Checking 'latest' schema file"
-                echo "DEBUG: LATEST_ID = $LATEST_ID"
-                echo "DEBUG: EXPECTED_ID = $EXPECTED_ID"
                 if [ "$LATEST_ID" != "$EXPECTED_ID" ]; then
                   echo "::error::Latest schema file was not updated to point to new version $VERSION. Expected \$id: $EXPECTED_ID, Got: $LATEST_ID"
                   exit 1
                 fi
-                echo "DEBUG: VERSION = $VERSION"
-                echo "DEBUG: EXPECTED_ID = $EXPECTED_ID"
-                echo "DEBUG: LATEST_ID = $LATEST_ID"
-                echo "DEBUG: ACTUAL_ID = $ACTUAL_ID"
               fi
             fi
           done <<< "$SCHEMA_FILES"
