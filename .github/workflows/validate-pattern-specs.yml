@@ -120,6 +120,9 @@ jobs:
                 EXPECTED_ID="https://raw.githubusercontent.com/ansible/pattern-service/main/specifications/pattern-schema/pattern-schema-${VERSION}.json"
                 # Validate new schema file's $id field
                 ACTUAL_ID=$(git show HEAD:$file | jq -r '.["$id"] // empty')
+                echo "DEBUG: Checking new versioned schema file $file"
+                echo "DEBUG: ACTUAL_ID = $ACTUAL_ID"
+                echo "DEBUG: EXPECTED_ID = $EXPECTED_ID"
                 if [ "$ACTUAL_ID" != "$EXPECTED_ID" ]; then
                   echo "::error::Schema file $file has incorrect \$id field. Expected: $EXPECTED_ID, Got: $ACTUAL_ID"
                   exit 1
@@ -127,6 +130,9 @@ jobs:
 
                 # Validate latest schema file points to new version
                 LATEST_ID=$(git show HEAD:specifications/pattern-schema/pattern-schema-latest.json | jq -r '.["$id"] // empty')
+                echo "DEBUG: Checking 'latest' schema file"
+                echo "DEBUG: LATEST_ID = $LATEST_ID"
+                echo "DEBUG: EXPECTED_ID = $EXPECTED_ID"
                 if [ "$LATEST_ID" != "$EXPECTED_ID" ]; then
                   echo "::error::Latest schema file was not updated to point to new version $VERSION. Expected \$id: $EXPECTED_ID, Got: $LATEST_ID"
                   exit 1
@@ -135,7 +141,6 @@ jobs:
                 echo "DEBUG: EXPECTED_ID = $EXPECTED_ID"
                 echo "DEBUG: LATEST_ID = $LATEST_ID"
                 echo "DEBUG: ACTUAL_ID = $ACTUAL_ID"
-
               fi
             fi
           done <<< "$SCHEMA_FILES"
