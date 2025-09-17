@@ -6,7 +6,7 @@ version: 1.0.0
 
 # Ansible Pattern Specification
 
-## Introduction:
+## Introduction
 
 This document describes the technical specification for an Ansible pattern, an extension of collections, which are the standard method for packaging and distributing Ansible content. Patterns are used by Ansible Automation Platform (AAP) to offer users the ability to start automating with minimal setup, enhancing productivity and efficiency.
 

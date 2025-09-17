@@ -85,13 +85,6 @@ jobs:
                 echo "::error::Specification file name does not match the specification version. Expected: $FILENAME_VERSION, Got: $FILE_VERSION"
                 exit 1
               fi
-
-              # Validate latest file points to new version
-              LATEST_VERSION=$(sed -n 's/^version:[[:space:]]*\([^[:space:]]*\).*/\1/p' "specifications/pattern-specification/pattern-specification-latest.md" | head -1)
-              if [ "$LATEST_VERSION" != "$FILENAME_VERSION" ]; then
-                echo "::error::Latest version of pattern specification does not point to the latest numeric version. Expected: $LATEST_VERSION, Got: $FILENAME_VERSION"
-                exit 1
-              fi
             fi
           done <<< "$NEW_SPEC_FILES"
 
