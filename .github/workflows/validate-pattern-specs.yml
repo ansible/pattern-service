@@ -101,6 +101,12 @@ jobs:
                 continue
               fi
 
+              # Check if this is a modified existing versioned file (not allowed)
+              if git show origin/main:$file >/dev/null 2>&1; then
+                echo "::error::Modifying existing versioned schema files is not allowed. Modified file: $file"
+                exit 1
+              fi
+
               # Extract version from filename
               VERSION=$(echo "$file" | sed -n 's/.*pattern-schema-\([^/]*\)\.json/\1/p')
 
