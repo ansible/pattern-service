@@ -17,7 +17,7 @@
     ],
     "properties": {
         "schema_version": {
-            "description": "Version of this schema being used",
+            "description": "Version of this schema being used, modifying me should not trigger an error",
             "type": "string"
         },
         "name": {
