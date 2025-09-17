@@ -32,7 +32,7 @@ jobs:
           echo "$NEW_SPEC_FILES" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
-          # Modified specification files  
+          # Modified specification files
           MODIFIED_SPEC_FILES=$(git diff origin/main --name-only --diff-filter=M -- specifications/pattern-specification/*.md ":(exclude)*dev.md" || true)
           echo "modified_spec_files<<EOF" >> $GITHUB_OUTPUT
           echo "$MODIFIED_SPEC_FILES" >> $GITHUB_OUTPUT
@@ -107,7 +107,6 @@ jobs:
 
               # Extract version from filename
               VERSION=$(echo "$file" | sed -n 's/.*pattern-schema-\([^/]*\)\.json/\1/p')
-
               if [ -n "$VERSION" ]; then
                 # Construct expected ID for the new versioned file
                 EXPECTED_ID="https://raw.githubusercontent.com/ansible/pattern-service/main/specifications/pattern-schema/pattern-schema-${VERSION}.json"
