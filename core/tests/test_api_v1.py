@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import pytest
 from freezegun import freeze_time
 from rest_framework import status
@@ -15,14 +17,50 @@ def test_retrieve_automation_success(client, automation):
     url = f"/api/pattern-service/v1/automations/{automation.pk}/"
     response = client.get(url)
     assert response.status_code == status.HTTP_200_OK
-    assert response.json() == api_examples.automation_get_response.value
+    expected = api_examples.automation_get_response.value
+    pattern_instance_id = response.json().get("pattern_instance")
+    expected.update(
+        {
+            "url": f"/api/pattern-service/v1/automations/{automation.pk}/",
+            "id": automation.pk,
+            "pattern_instance": pattern_instance_id,
+            "related": {
+                "pattern_instance": (
+                    f"/api/pattern-service/v1/pattern_instances/{pattern_instance_id}/"
+                ),
+            },
+            "summary_fields": {"pattern_instance": {"id": 1}},
+        }
+    )
+    assert response.json() == expected
 
 
 def test_list_automations_success(client, automation):
     url = "/api/pattern-service/v1/automations/"
     response = client.get(url)
     assert response.status_code == status.HTTP_200_OK
-    assert response.json() == [api_examples.automation_get_response.value]
+    expected = api_examples.automation_get_response.value
+    expected.update(
+        {
+            "url": f"/api/pattern-service/v1/automations/{automation.pk}/",
+            "id": automation.pk,
+        }
+    )
+    pattern_instance_id = response.json()[0].get("pattern_instance")
+    expected.update(
+        {
+            "url": f"/api/pattern-service/v1/automations/{automation.pk}/",
+            "id": automation.pk,
+            "pattern_instance": pattern_instance_id,
+            "related": {
+                "pattern_instance": (
+                    f"/api/pattern-service/v1/pattern_instances/{pattern_instance_id}/"
+                ),
+            },
+            "summary_fields": {"pattern_instance": {"id": pattern_instance_id}},
+        }
+    )
+    assert response.json() == [expected]
 
 
 def test_retrieve_controller_label_success(client, controller_label):
@@ -36,21 +74,36 @@ def test_list_controller_labels_success(client, controller_label):
     url = "/api/pattern-service/v1/controller_labels/"
     response = client.get(url)
     assert response.status_code == status.HTTP_200_OK
-    assert response.json() == [api_examples.controller_label_get_response.value]
+    expected = api_examples.controller_label_get_response.value
+    expected.update(
+        {
+            "url": f"/api/pattern-service/v1/controller_labels/{controller_label.pk}/",
+            "id": controller_label.pk,
+        }
+    )
+    assert response.json() == [expected]
 
 
-def test_create_pattern_success(client, db):
+@patch("core.views.submit_task", return_value=False)
+def test_create_pattern_success(mock_submit_task, client, db):
     url = "/api/pattern-service/v1/patterns/"
     data = api_examples.pattern_post_request.value
     response = client.post(url, data, format="json")
     assert response.status_code == status.HTTP_202_ACCEPTED
-    assert response.json() == api_examples.pattern_post_response.value
+    assert response.json().get(
+        "message"
+    ) == api_examples.pattern_post_response.value.get("message")
+    assert isinstance(response.json().get("task_id"), int)
 
 
 def test_retrieve_pattern_success(client, pattern):
     url = f"/api/pattern-service/v1/patterns/{pattern.pk}/"
     response = client.get(url)
     assert response.status_code == status.HTTP_200_OK
+    expected = api_examples.pattern_get_response.value
+    expected.update(
+        {"url": f"/api/pattern-service/v1/patterns/{pattern.pk}/", "id": pattern.pk}
+    )
     assert response.json() == api_examples.pattern_get_response.value
 
 
@@ -58,16 +111,24 @@ def test_list_patterns_success(client, pattern):
     url = "/api/pattern-service/v1/patterns/"
     response = client.get(url)
     assert response.status_code == status.HTTP_200_OK
-    assert response.json() == [api_examples.pattern_get_response.value]
+    expected = api_examples.pattern_get_response.value
+    expected.update(
+        {"url": f"/api/pattern-service/v1/patterns/{pattern.pk}/", "id": pattern.pk}
+    )
+    assert response.json() == [expected]
 
 
-def test_create_pattern_instance_success(client, pattern):
+@patch("core.views.submit_task", return_value=False)
+def test_create_pattern_instance_success(mock_submit_task, client, pattern):
     url = "/api/pattern-service/v1/pattern_instances/"
     data = api_examples.pattern_instance_post_request.value
     data["pattern"] = pattern.pk
     response = client.post(url, data, format="json")
     assert response.status_code == status.HTTP_202_ACCEPTED
-    assert response.json() == api_examples.pattern_instance_post_response.value
+    assert response.json().get(
+        "message"
+    ) == api_examples.pattern_instance_post_response.value.get("message")
+    assert isinstance(response.json().get("task_id"), int)
 
 
 def test_retrieve_pattern_instance_success(client, controller_label, pattern_instance):
@@ -75,7 +136,20 @@ def test_retrieve_pattern_instance_success(client, controller_label, pattern_ins
     url = f"/api/pattern-service/v1/pattern_instances/{pattern_instance.pk}/"
     response = client.get(url)
     assert response.status_code == status.HTTP_200_OK
-    assert response.json() == api_examples.pattern_instance_get_response.value
+    pattern_id = response.json().get("pattern")
+    assert isinstance(pattern_id, int)
+    expected = api_examples.pattern_instance_get_response.value
+    expected.update(
+        {
+            "url": f"/api/pattern-service/v1/pattern_instances/{pattern_instance.pk}/",
+            "id": pattern_instance.pk,
+            "controller_labels": [controller_label.id],
+            "summary_fields": {"pattern": {"id": pattern_id}},
+            "related": {"pattern": f"/api/pattern-service/v1/patterns/{pattern_id}/"},
+            "pattern": pattern_id,
+        }
+    )
+    assert response.json() == expected
 
 
 def test_list_pattern_instances_success(client, controller_label, pattern_instance):
@@ -83,13 +157,28 @@ def test_list_pattern_instances_success(client, controller_label, pattern_instan
     url = "/api/pattern-service/v1/pattern_instances/"
     response = client.get(url)
     assert response.status_code == status.HTTP_200_OK
-    assert response.json() == [api_examples.pattern_instance_get_response.value]
+    pattern_id = response.json()[0].get("pattern")
+    assert isinstance(pattern_id, int)
+    expected = api_examples.pattern_instance_get_response.value
+    expected.update(
+        {
+            "url": f"/api/pattern-service/v1/pattern_instances/{pattern_instance.pk}/",
+            "id": pattern_instance.pk,
+            "controller_labels": [controller_label.id],
+            "summary_fields": {"pattern": {"id": pattern_id}},
+            "related": {"pattern": f"/api/pattern-service/v1/patterns/{pattern_id}/"},
+            "pattern": pattern_id,
+        }
+    )
+    assert response.json() == [expected]
 
 
 def test_retrieve_task_success(client, task):
     url = f"/api/pattern-service/v1/tasks/{task.pk}/"
     response = client.get(url)
     assert response.status_code == status.HTTP_200_OK
+    expected = api_examples.task_get_response.value
+    expected.update({"url": url, "id": task.pk})
     assert response.json() == api_examples.task_get_response.value
 
 
@@ -97,4 +186,6 @@ def test_list_tasks_success(client, task):
     url = "/api/pattern-service/v1/tasks/"
     response = client.get(url)
     assert response.status_code == status.HTTP_200_OK
-    assert response.json() == [api_examples.task_get_response.value]
+    expected = api_examples.task_get_response.value
+    expected.update({"url": f"/api/pattern-service/v1/tasks/{task.pk}/", "id": task.pk})
+    assert response.json() == [expected]

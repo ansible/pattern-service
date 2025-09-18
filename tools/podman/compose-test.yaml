@@ -5,3 +5,39 @@ services:
       POSTGRESQL_ADMIN_PASSWORD: insecure
     ports:
       - '5432:5432'
+    # volumes:
+    #   - 'postgres_data:/var/lib/pgsql/data'
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+  worker:
+    image: localhost/pattern-service-worker
+    environment:
+      PATTERN_SERVICE_DISPATCHER_NODE_ID: test-worker
+      PATTERN_SERVICE_MODE: testing
+      PATTERN_SERVICE_DB_HOST: postgres
+      PATTERN_SERVICE_DB_PORT: 5432
+      PATTERN_SERVICE_DB_NAME: postgres
+      PATTERN_SERVICE_DB_USER: postgres
+      PATTERN_SERVICE_DB_PASSWORD: insecure
+      PATTERN_SERVICE_AAP_URL: "http://localhost:3000"
+    build:
+      context: ../../
+      dockerfile: tools/podman/Containerfile.dev
+    command:
+      - /bin/bash
+      - -c
+      - python3.11 /app/manage.py worker
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: always
+  hub:
+    image: localhost/pattern-service-integration-hub
+    build:
+      context: ../../
+      dockerfile: tools/podman/Containerfile.hub
+    restart: always

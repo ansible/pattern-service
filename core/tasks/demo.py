@@ -1,7 +1,7 @@
 from dispatcherd.publish import submit_task
 from dispatcherd.publish import task
 
-DISPATCHERD_DEFAULT_CHANNEL = "pattern-service-tasks"
+from core.tasks.common import DISPATCHERD_DEFAULT_CHANNEL
 
 
 @task(queue=DISPATCHERD_DEFAULT_CHANNEL, decorate=False)

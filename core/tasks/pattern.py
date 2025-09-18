@@ -3,6 +3,12 @@ import logging
 import os
 from contextlib import closing
 
+from dispatcherd.publish import task
+
+from core.models import Pattern
+from core.models import PatternInstance
+from core.models import Task
+from core.tasks.common import DISPATCHERD_DEFAULT_CHANNEL
 from core.utils.controller import assign_execute_roles
 from core.utils.controller import build_collection_uri
 from core.utils.controller import create_execution_environment
@@ -13,14 +19,11 @@ from core.utils.controller import download_collection
 from core.utils.controller import get_http_session
 from core.utils.controller import save_instance_state
 
-from .models import Pattern
-from .models import PatternInstance
-from .models import Task
-
 logger = logging.getLogger(__name__)
 
 
-def run_pattern_task(pattern_id: int, task_id: int) -> None:
+@task(queue=DISPATCHERD_DEFAULT_CHANNEL, decorate=False)
+def pattern_create(pattern_id: int, task_id: int) -> None:
     """
     Orchestrates downloading a collection and saving a pattern definition.
 
@@ -66,7 +69,8 @@ def run_pattern_task(pattern_id: int, task_id: int) -> None:
         task.mark_failed({"error": error_message})
 
 
-def run_pattern_instance_task(instance_id: int, task_id: int) -> None:
+@task(queue=DISPATCHERD_DEFAULT_CHANNEL, decorate=False)
+def pattern_instance_create(instance_id: int, task_id: int) -> None:
     task = Task.objects.get(id=task_id)
     try:
         instance = PatternInstance.objects.select_related("pattern").get(id=instance_id)

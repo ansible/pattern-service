@@ -115,9 +115,7 @@ DISPATCHER_CONFIG = {
     "version": 2,
     "service": {
         "main_kwargs": {"node_id": "pattern-service-a"},
-        "process_manager_kwargs": {
-            "preload_modules": ["pattern_service.core.tasks.hazmat"]
-        },
+        "process_manager_kwargs": {"preload_modules": ["core.tasks.hazmat"]},
     },
     "brokers": {
         "pg_notify": {

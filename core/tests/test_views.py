@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -60,7 +62,8 @@ class PatternViewSetTest(SharedDataMixin, APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["collection_name"], "mynamespace.mycollection")
 
-    def test_pattern_create_view(self):
+    @patch("core.views.submit_task", return_value=False)
+    def test_pattern_create_view(self, mock_submit_task):
         url = reverse("pattern-list")
         data = {
             "collection_name": "new.namespace.collection",
@@ -71,6 +74,8 @@ class PatternViewSetTest(SharedDataMixin, APITestCase):
 
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+
+        mock_submit_task.assert_called_once()
 
         # Pattern created
         pattern = Pattern.objects.get(pattern_name="new_pattern")
@@ -149,7 +154,8 @@ class PatternInstanceViewSetTest(SharedDataMixin, APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["organization_id"], 1)
 
-    def test_pattern_instance_create_view(self):
+    @patch("core.views.submit_task", return_value=False)
+    def test_pattern_instance_create_view(self, mock_submit_task):
         url = reverse("pattern_instance-list")
         data = {
             "organization_id": 2,
@@ -169,6 +175,9 @@ class PatternInstanceViewSetTest(SharedDataMixin, APITestCase):
         # Verify the fields were saved correctly
         self.assertEqual(instance.organization_id, 2)
         self.assertEqual(instance.credentials["user"], "tester")
+
+        # assert dispatcher task created
+        mock_submit_task.assert_called_once()
 
         # Task id returned directly
         task_id = response.data.get("task_id")
