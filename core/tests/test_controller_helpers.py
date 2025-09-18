@@ -151,7 +151,10 @@ def test_download_collection_failure(mock_download_failure):
 def test_create_project_builds_payload_and_waits(mock_wait, mock_post, mock_session):
     instance = MagicMock(organization_id=7, credentials={"project": 123})
     pattern = MagicMock(
+        collection_name="my_namespace.my_collection",
         collection_version_uri="https://hub/artifacts/collection-1.0.0.tar.gz",
+        pattern_name="test_pattern",
+        collection_version="1.0.0",
         pattern_definition={
             "aap_resources": {
                 "controller_project": {"name": "proj", "scm_type": "git"},
@@ -166,6 +169,7 @@ def test_create_project_builds_payload_and_waits(mock_wait, mock_post, mock_sess
     assert pid == 55
     payload = mock_post.call_args.args[2]
     print("payload", payload)
+    assert payload["name"] == "proj my_namespace.my_collection.test_pattern 436aa34f"
     assert payload["organization"] == 7
     assert payload["scm_type"] == "archive"
     assert payload["scm_url"] == "https://hub/artifacts/collection-1.0.0.tar.gz"
@@ -178,8 +182,27 @@ def test_create_project_builds_payload_and_waits(mock_wait, mock_post, mock_sess
 @pytest.mark.parametrize(
     "ee_def,expected_pull",
     [
-        ({"name": "ee1", "image_name": "ns/repo:tag"}, ""),
-        ({"name": "ee1", "image_name": "ns/repo:tag", "pull": "always"}, "always"),
+        (
+            {
+                "name": "ee1",
+                "collection_name": "collection.example",
+                "collection_version": "2.0.0",
+                "pattern_name": "test",
+                "image_name": "ns/repo:tag",
+            },
+            "",
+        ),
+        (
+            {
+                "name": "ee1",
+                "collection_name": "collection.example",
+                "collection_version": "2.0.0",
+                "pattern_name": "test",
+                "image_name": "ns/repo:tag",
+                "pull": "always",
+            },
+            "always",
+        ),
     ],
 )
 def test_create_execution_environment_pull(
@@ -190,6 +213,7 @@ def test_create_execution_environment_pull(
     mock_post.return_value = {"id": 99}
     _ = create_execution_environment(mock_session, instance, pattern_def)
     payload = mock_post.call_args.args[2]
+    assert payload["name"] == "ee1 collection.example.test 74d0f2c7"
     assert payload["image"] == "aap.example.com/ns/repo:tag"
     assert payload["pull"] == expected_pull
 
@@ -198,7 +222,12 @@ def test_create_execution_environment_pull(
 @patch("core.utils.controller.helpers.post")
 def test_create_labels(mock_post, MockControllerLabel, mock_session):
     instance = MagicMock(organization_id=1)
-    pattern_def = {"aap_resources": {"controller_labels": ["L1", "L2"]}}
+    pattern_def = {
+        "collection_name": "my_test_namespace.my_test_collection",
+        "pattern_name": "tester",
+        "collection_version": "1.0.0",
+        "aap_resources": {"controller_labels": ["L1", "L2"]},
+    }
 
     mock_post.side_effect = [
         {"id": 10},
@@ -216,7 +245,10 @@ def test_create_labels(mock_post, MockControllerLabel, mock_session):
     assert labels == [label1, label2]
     # Ensure proper payloads used
     first_payload = mock_post.call_args_list[0].args[2]
-    assert first_payload == {"name": "L1", "organization": 1}
+    assert first_payload == {
+        "name": "L1 my_test_namespace.my_test_collection.tester 5202431b",
+        "organization": 1,
+    }
 
 
 @patch("core.utils.controller.helpers.post")
@@ -224,6 +256,9 @@ def test_create_job_templates_payload_and_survey(mock_post, mock_session):
     instance = MagicMock(organization_id=5)
     pattern_def = {
         "name": "mypat",
+        "collection_name": "tester_namespace.test_collection",
+        "pattern_name": "demo_pattern",
+        "collection_version": "3.0.0",
         "aap_resources": {
             "controller_job_templates": [
                 {
@@ -261,6 +296,10 @@ def test_create_job_templates_payload_and_survey(mock_post, mock_session):
 
     # Verify payload fields for a JT
     first_jt_payload = mock_post.call_args_list[0].args[2]
+    assert (
+        first_jt_payload["name"]
+        == "jt1 tester_namespace.test_collection.demo_pattern dc5a3002"
+    )
     assert first_jt_payload["organization"] == 5
     assert first_jt_payload["project"] == 10
     assert first_jt_payload["execution_environment"] == 20
